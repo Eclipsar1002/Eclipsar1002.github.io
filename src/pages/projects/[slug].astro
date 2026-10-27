@@ -1,0 +1,46 @@
+---
+import { getCollection, render } from 'astro:content';
+import MarkdownLayout from '../../layouts/MarkdownLayout.astro';
+import { getLocaleFromUrl, getSiteConfig } from '../../config/site';
+import { cleanContentSlug } from '../../config/i18n';
+
+export const prerender = true;
+
+const locale = getLocaleFromUrl(Astro.url);
+const siteConfig = getSiteConfig(locale);
+
+export async function getStaticPaths() {
+	const projects = (await getCollection('projects')).filter((project) => project.data.lang === 'zh');
+	return projects.map((project) => ({
+		params: { slug: project.id },
+		props: { project },
+	}));
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+const cleanSlug = cleanContentSlug(project.id);
+const heroTransitionName = `project-title-${cleanSlug.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
+---
+
+<MarkdownLayout
+	title={project.data.title}
+	description={project.data.description}
+	date={project.data.date}
+	tags={project.data.tags}
+	heroTransitionName={heroTransitionName}
+>
+	<div class="mb-8 flex flex-wrap gap-3">
+		{project.data.url && (
+			<a href={project.data.url} target="_blank" class="rounded-full bg-white px-4 py-2 text-sm font-medium text-black">
+				{siteConfig.ui.projectLiveCta}
+			</a>
+		)}
+		{project.data.repo && (
+			<a href={project.data.repo} target="_blank" class="rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white">
+				{siteConfig.ui.projectRepoCta}
+			</a>
+		)}
+	</div>
+	<Content />
+</MarkdownLayout>

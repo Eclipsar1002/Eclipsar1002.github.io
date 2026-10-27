@@ -1,0 +1,250 @@
+---
+import { getLocaleFromUrl, getSiteConfig } from '../config/site';
+
+const locale = getLocaleFromUrl(Astro.url);
+const siteConfig = getSiteConfig(locale);
+
+// 直接使用网站当前配置的背景图
+const backgroundImage = siteConfig.background.image;
+// 压暗遮罩：复用 site 配置里的 overlay 渐变
+const dimOverlay = siteConfig.background.overlay;
+---
+
+<div
+	id="rain-effect"
+	class="rain-effect"
+	data-rain-effect
+	data-background-image={backgroundImage}
+>
+	<canvas class="rain-canvas" data-rain-canvas></canvas>
+
+	
+</div>
+
+<style>
+	.rain-effect {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+		pointer-events: none;
+		z-index: 10;
+	}
+
+	.rain-canvas {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+	}
+
+	/*
+	 * 压暗遮罩：雨滴画在 canvas 上（全亮度），
+	 * 只压暗背景观感，不影响雨滴本身。
+	 */
+	.rain-dim {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+	}
+</style>
+
+<script>
+	import RaindropFX from 'raindrop-fx';
+
+	type RainState = {
+		fx?: any;
+		root?: HTMLElement;
+		resizeHandler?: () => void;
+		visibilityHandler?: () => void;
+	};
+
+	declare global {
+		interface Window {
+			__rainEffectState?: RainState;
+		}
+	}
+
+	const destroyRainEffect = () => {
+		const state = window.__rainEffectState;
+
+		if (!state) return;
+
+		if (state.resizeHandler) {
+			window.removeEventListener('resize', state.resizeHandler);
+		}
+
+		if (state.visibilityHandler) {
+			document.removeEventListener('visibilitychange', state.visibilityHandler);
+		}
+
+		try {
+			state.fx?.stop();
+		} catch (error) {
+			console.warn('[RainEffect] FX cleanup failed:', error);
+		}
+
+		window.__rainEffectState = undefined;
+	};
+
+	const supportsWebGL2 = (canvas: HTMLCanvasElement) => {
+		try {
+			return !!canvas.getContext('webgl2');
+		} catch {
+			return false;
+		}
+	};
+
+	/*
+	 * 性能分级：触屏 / 小屏低核数降低密度与分辨率。
+	 */
+	const isLiteDevice = () => {
+		return (
+			window.matchMedia?.('(pointer: coarse)').matches ||
+			(window.innerWidth < 760 && (navigator.hardwareConcurrency || 8) <= 6)
+		);
+	};
+
+	const bootRain = async (
+		canvas: HTMLCanvasElement,
+		backgroundImage: string
+	) => {
+		if (!supportsWebGL2(canvas)) {
+			console.info('[RainEffect] WebGL2 不可用，降级为纯静态背景。');
+			return null;
+		}
+
+		const response = await fetch(backgroundImage);
+		const blob = await response.blob();
+		const bitmap = await createImageBitmap(blob);
+
+		const lite = isLiteDevice();
+		const maxDpr = lite ? 1.5 : 2;
+		const dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
+
+		canvas.width = Math.floor(window.innerWidth * dpr);
+		canvas.height = Math.floor(window.innerHeight * dpr);
+
+		const fx = new RaindropFX({
+			canvas,
+			background: bitmap,
+			spawnLimit: lite ? 1100 : 2000,
+			dropletsPerSeconds: lite ? 320 : 500
+		});
+
+		await fx.start();
+
+		return { fx, maxDpr };
+	};
+
+	const mountRainEffect = () => {
+		const root = document.querySelector<HTMLElement>('[data-rain-effect]');
+		const canvas = root?.querySelector<HTMLCanvasElement>(
+			'[data-rain-canvas]'
+		);
+
+		if (!root || !canvas) {
+			return;
+		}
+
+		const backgroundImage =
+			root.getAttribute('data-background-image') || '';
+
+		/*
+		 * 没配置背景图时雨滴无从渲染，直接跳过，
+		 * 保留 CSS 背景层兜底。
+		 */
+		if (!backgroundImage) {
+			return;
+		}
+
+		/*
+		 * 同一 DOM 已挂载（或正在挂载）时不重复初始化。
+		 */
+		const existing = window.__rainEffectState;
+
+		if (existing?.root === root) {
+			return;
+		}
+
+		if (existing) {
+			destroyRainEffect();
+		}
+
+		// 先占位，防止 ClientRouter 快速切换时重复 boot
+		window.__rainEffectState = { root };
+
+		bootRain(canvas, backgroundImage)
+			.then((result) => {
+				const state = window.__rainEffectState;
+
+				if (!state || state.root !== root) {
+					result?.fx.stop();
+					return;
+				}
+
+				if (!result) {
+					return;
+				}
+
+				state.fx = result.fx;
+
+				state.resizeHandler = () => {
+					const dpr = Math.min(
+						window.devicePixelRatio || 1,
+						result.maxDpr
+					);
+
+					try {
+						state.fx?.resize(
+							Math.floor(window.innerWidth * dpr),
+							Math.floor(window.innerHeight * dpr)
+						);
+					} catch {
+						// ignore
+					}
+				};
+
+				state.visibilityHandler = () => {
+					if (!state.fx) return;
+
+					if (document.hidden) {
+						state.fx.stop();
+					} else {
+						state.fx.start();
+					}
+				};
+
+				window.addEventListener('resize', state.resizeHandler, {
+					passive: true
+				});
+				document.addEventListener(
+					'visibilitychange',
+					state.visibilityHandler
+				);
+
+				console.info('[RainEffect] raindrop-fx ready.');
+			})
+			.catch((error) => {
+				console.error('[RainEffect] 初始化失败：', error);
+			});
+	};
+
+	/*
+	 * 首次正常加载。
+	 */
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', mountRainEffect, {
+			once: true
+		});
+	} else {
+		mountRainEffect();
+	}
+
+	/*
+	 * Astro ClientRouter 页面切换完成后重新检查。
+	 */
+	document.addEventListener('astro:page-load', mountRainEffect);
+</script>

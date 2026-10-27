@@ -1,0 +1,41 @@
+{
+  "name": "atlas",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "dev:host": "node ./scripts/dev-server.mjs",
+    "dev:dynamic": "node ./scripts/dev-server.mjs --dynamic",
+    "build": "astro build",
+    "build:dynamic": "node ./scripts/with-dynamic-env.mjs astro build",
+    "start": "node ./scripts/start-server.mjs",
+    "preview": "astro preview",
+    "setup": "node ./scripts/setup.mjs",
+    "pm2:start": "npm run build:dynamic && pm2 start ecosystem.config.cjs",
+    "pm2:restart": "npm run build:dynamic && pm2 restart atlas-dynamic",
+    "pm2:logs": "pm2 logs atlas-dynamic",
+    "pm2:stop": "pm2 stop atlas-dynamic",
+    "pm2:delete": "pm2 delete atlas-dynamic",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.0",
+    "astro": "^6.3.6",
+    "curtainsjs": "^8.1.6",
+    "katex": "^0.16.47",
+    "raindrop-fx": "^1.0.8",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
+    "tailwindcss": "^4.3.0"
+  },
+  "optionalDependencies": {
+    "@astrojs/node": "^10.1.1"
+  },
+  "allowScripts": {
+    "esbuild@0.27.7": true,
+    "sharp@0.34.5": true
+  }
+}

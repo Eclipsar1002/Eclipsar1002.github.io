@@ -1,0 +1,62 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { ClientRouter } from 'astro:transitions';
+import { getLocaleFromUrl, getSiteConfig, locales, localizePath } from '../config/site';
+import '../styles/global.css';
+import RainEffect from '../components/RainEffect.astro';
+interface Props {
+	title?: string;
+	description?: string;
+}
+
+const locale = getLocaleFromUrl(Astro.url);
+const siteConfig = getSiteConfig(locale);
+const { title = siteConfig.name, description = siteConfig.description } = Astro.props;
+
+const pageTitle = title === siteConfig.name ? title : `${title} | ${siteConfig.name}`;
+const currentPath = (Astro.url.pathname.replace(/^\/en(?=\/|$)/, '') || '/').replace(/-en(?=\/?$)/, '');
+const background = siteConfig.background;
+const backgroundImageStyle = [
+	`background-image: url("${background.image}")`,
+	`filter: blur(${background.blur})`,
+	`opacity: ${background.opacity}`,
+	`transform: scale(${background.scale})`,
+].join('; ');
+const backgroundOverlayStyle = `background: ${background.overlay}`;
+---
+
+<!doctype html>
+<html lang={locales[locale].lang}>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content={description} />
+		<meta property="og:title" content={pageTitle} />
+		<meta property="og:description" content={description} />
+		<meta property="og:type" content="website" />
+		<link rel="alternate" hreflang="zh-CN" href={localizePath('zh', currentPath)} />
+		<link rel="alternate" hreflang="en" href={localizePath('en', currentPath)} />
+		<ClientRouter />
+		<title>{pageTitle}</title>
+	</head>
+	<body class="min-h-screen bg-black text-white antialiased">
+		<div class="pointer-events-none fixed inset-0 z-0 overflow-hidden" transition:persist="site-background">
+			<div class="absolute inset-0 bg-cover bg-center bg-no-repeat" style={backgroundImageStyle}></div>
+
+
+			<RainEffect />
+		</div>
+		<Header />
+		<main class="relative z-10" transition:name="page-content" transition:animate="slide">
+			<slot />
+		</main>
+		<div class="relative z-10">
+			<Footer />
+		</div>
+	</body>
+</html>
+
