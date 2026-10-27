@@ -105,7 +105,7 @@ export async function fetchPlaylist(
   throw lastErr ?? new Error('歌单获取失败')
 }
 
-export const DEFAULT_PLAYLIST_ID = '18401889368'
+export const DEFAULT_PLAYLIST_ID = '12309959984'
 export const RAIN_AUDIO_URL = 'https://media.rainymood.com/0.mp3'
 
 /**
