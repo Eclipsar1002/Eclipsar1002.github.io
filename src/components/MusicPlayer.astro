@@ -2,7 +2,6 @@
 import { DEFAULT_PLAYLIST_ID } from '../lib/meting';
 interface Props { playlistId?: string; compact?: boolean }
 const { playlistId = DEFAULT_PLAYLIST_ID, compact = true } = Astro.props;
-const bars = Array.from({ length: 48 }, (_, i) => ({ angle: i * 360 / 48 }));
 ---
 
 <div class="music-player" data-music-player data-compact={compact} data-playlist-id={playlistId}>
@@ -25,8 +24,8 @@ const bars = Array.from({ length: 48 }, (_, i) => ({ angle: i * 360 / 48 }));
     </div>
   </div>
   <div class="mp-disc" aria-label="当前歌曲封面与播放动效">
-    <svg class="mp-spectrum" viewBox="0 0 240 240" aria-hidden="true">
-      {bars.map(({ angle }) => <line data-spectrum-bar x1="120" y1="33" x2="120" y2="28" transform={'rotate(' + angle + ' 120 120)'} />)}
+    <svg class="mp-spectrum" viewBox="0 0 280 280" aria-hidden="true">
+      <path data-spectrum-ring fill-rule="evenodd" d="M 244 140 A 104 104 0 1 1 36 140 A 104 104 0 1 1 244 140 Z M 238 140 A 98 98 0 1 0 42 140 A 98 98 0 1 0 238 140 Z" />
     </svg>
     <div class="mp-cover"><img data-cover src="/avatar.png" alt="音乐封面" decoding="async" /><span class="mp-disc-center" aria-hidden="true"></span></div>
   </div>
@@ -61,7 +60,7 @@ const bars = Array.from({ length: 48 }, (_, i) => ({ angle: i * 360 / 48 }));
   .mp-btn-play { border: 1px solid #ffffff55; width: 42px; height: 42px; background: #ffffff08; }
   .mp-disc { position: relative; width: 100%; aspect-ratio: 1; }
   .mp-spectrum { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-  .mp-spectrum line { stroke: rgba(255, 255, 255, .68); stroke-width: 8; stroke-linecap: round; }
+  .mp-spectrum path { fill: rgba(255, 255, 255, .62); }
   .mp-cover { position: absolute; inset: 17%; border-radius: 50%; overflow: hidden; background: radial-gradient(circle, #27272a, #09090b); box-shadow: 0 0 0 1px #ffffff25, 0 8px 32px #0005; animation: record-spin 28s linear infinite; animation-play-state: paused; }
   .mp-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .mp-disc-center { position: absolute; inset: calc(50% - 5px); width: 10px; height: 10px; border-radius: 50%; border: 2px solid #ffffff75; background: #18181b; box-shadow: 0 0 0 5px #ffffff16; }
