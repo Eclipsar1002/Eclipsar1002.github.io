@@ -10,6 +10,7 @@ const blog = defineCollection({
 		updatedDate: z.coerce.date().optional(),
 		tags: z.array(z.string()).default([]),
 		cover: z.string().optional(),
+		attachments: z.array(z.object({ name: z.string().default('PDF 附件'), file: z.string() })).default([]),
 		draft: z.boolean().default(false),
 	}),
 });
@@ -20,12 +21,13 @@ const projects = defineCollection({
 		lang: z.enum(['zh', 'en']).default('zh'),
 		title: z.string(),
 		description: z.string(),
-		date: z.date(),
+		date: z.coerce.date(),
 		tags: z.array(z.string()).default([]),
 		role: z.string(),
-		url: z.string().url().optional(),
-		repo: z.string().url().optional(),
+		url: z.preprocess((value) => value === '' ? undefined : value, z.string().url().optional()),
+		repo: z.preprocess((value) => value === '' ? undefined : value, z.string().url().optional()),
 		featured: z.boolean().default(false),
+		attachments: z.array(z.object({ name: z.string().default('PDF 附件'), file: z.string() })).default([]),
 	}),
 });
 

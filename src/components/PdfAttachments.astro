@@ -1,0 +1,19 @@
+---
+interface Props { files?: Array<{ name: string; file: string }> }
+const { files = [] } = Astro.props;
+// Only serve site files or HTTPS links; never render executable URL schemes.
+const attachments = files.filter(({ file }) => file.startsWith('/') && !file.startsWith('//') || file.startsWith('https://'));
+---
+
+{attachments.length > 0 && <section class="mt-8 rounded-xl border border-white/15 bg-white/5 p-5" aria-label="PDF 附件">
+  <h2 class="text-lg font-medium text-white">PDF 附件</h2>
+  <ul class="mt-4 space-y-4">
+    {attachments.map(({ name, file }) => <li class="flex flex-wrap items-center justify-between gap-3">
+      <span class="break-words text-zinc-300">{name || 'PDF 附件'}</span>
+      <span class="flex gap-4 text-sm text-white">
+        <a href={file} target="_blank" rel="noopener noreferrer" data-astro-reload>打开 PDF ↗</a>
+        <a href={file} download data-astro-reload>下载</a>
+      </span>
+    </li>)}
+  </ul>
+</section>}

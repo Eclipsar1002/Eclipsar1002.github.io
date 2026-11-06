@@ -6,7 +6,7 @@ async function boot() {
   if (!response.ok) throw new Error('无法读取后台设置');
   const settings = await response.json();
   if (!settings.authBaseUrl) {
-    message.textContent = '文章、个人动态和外观设置的编辑器已准备好。首次使用还需要接入 GitHub 登录认证服务。';
+    message.textContent = '文章、项目、个人动态和外观设置的编辑器已准备好。首次使用还需要接入 GitHub 登录认证服务。';
     const instructions = document.createElement('p');
     const link = document.createElement('a');
     link.href = 'https://github.com/Eclipsar1002/Eclipsar1002.github.io/blob/main/instruction/admin-setup.md';

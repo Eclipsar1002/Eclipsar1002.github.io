@@ -25,6 +25,6 @@ const cleanSlug = cleanContentSlug(post.id);
 const heroTransitionName = `blog-title-${cleanSlug.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
 ---
 
-<MarkdownLayout title={getEntryTitle(post)} description={getEntryDescription(post)} date={post.data.pubDate} tags={post.data.tags} cover={post.data.cover} readingStats={getReadingStats(post.body)} backlinks={backlinks} heroTransitionName={heroTransitionName}>
+<MarkdownLayout title={getEntryTitle(post)} description={getEntryDescription(post)} date={post.data.pubDate} tags={post.data.tags} cover={post.data.cover} attachments={post.data.attachments} readingStats={getReadingStats(post.body)} backlinks={backlinks} heroTransitionName={heroTransitionName}>
 	<Content />
 </MarkdownLayout>

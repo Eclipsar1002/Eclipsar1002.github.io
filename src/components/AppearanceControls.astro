@@ -4,6 +4,7 @@
     <p class="appearance-title">留一个舒服的亮度</p>
     <label for="background-brightness">背景明暗 <output data-brightness-value></output></label>
     <input id="background-brightness" data-brightness type="range" min="10" max="100" step="1" />
+    <label class="rain-toggle" for="background-rain">背景雨滴 <input id="background-rain" data-rain-toggle type="checkbox" /></label>
     <label for="background-image">背景图片地址</label>
     <input id="background-image" data-background-url type="url" placeholder="https://… 或 /uploads/…" />
     <div class="appearance-actions">
@@ -24,6 +25,7 @@
     if (!controls || !background || controls.dataset.bound) return;
     controls.dataset.bound = 'true';
     const brightness = controls.querySelector<HTMLInputElement>('[data-brightness]')!;
+    const rainToggle = controls.querySelector<HTMLInputElement>('[data-rain-toggle]')!;
     const urlInput = controls.querySelector<HTMLInputElement>('[data-background-url]')!;
     const output = controls.querySelector<HTMLOutputElement>('[data-brightness-value]')!;
     const message = controls.querySelector<HTMLElement>('[data-appearance-message]')!;
@@ -38,10 +40,11 @@
         return url.protocol === 'https:' || (url.protocol === 'http:' && url.origin === location.origin) ? url.href : '';
       } catch { return ''; }
     };
-    const saved = load<{ image?: string; brightness?: number } | null>('site.appearance', null);
+    const saved = load<{ image?: string; brightness?: number; rainEnabled?: boolean } | null>('site.appearance', null);
     let state = {
       image: safeImage(saved?.image) || safeImage(defaults.image),
       brightness: Math.max(.1, Math.min(1, Number.isFinite(saved?.brightness) ? saved!.brightness! : defaults.brightness)),
+      rainEnabled: saved?.rainEnabled ?? true,
     };
     function apply(persist = true) {
       background!.style.backgroundImage = `url(${JSON.stringify(state.image)})`;
@@ -49,17 +52,25 @@
       const rain = document.querySelector<HTMLElement>('[data-rain-effect]');
       if (rain) {
         rain.style.filter = `blur(${background!.dataset.defaultBlur || '0px'}) brightness(${state.brightness})`;
-        if (safeImage(rain.dataset.backgroundImage) !== state.image) {
+        if (safeImage(rain.dataset.backgroundImage) !== state.image || rain.hasAttribute('data-rain-enabled') !== state.rainEnabled) {
           rain.dataset.backgroundImage = state.image;
+          rain.toggleAttribute('data-rain-enabled', state.rainEnabled);
+          rain.hidden = !state.rainEnabled;
           document.dispatchEvent(new Event('atlas:background-change'));
         }
       }
       brightness.value = String(Math.round(state.brightness * 100));
+      rainToggle.checked = state.rainEnabled;
       output.value = `${brightness.value}%`;
       if (persist) save('site.appearance', state);
     }
     urlInput.value = saved?.image || defaults.image;
     apply(false);
+    rainToggle.addEventListener('change', () => {
+      state.rainEnabled = rainToggle.checked;
+      apply();
+      message.textContent = state.rainEnabled ? '雨滴已开启。' : '雨滴已关闭。';
+    });
     brightness.addEventListener('input', () => {
       state.brightness = Number(brightness.value) / 100;
       apply();
@@ -78,7 +89,7 @@
     });
     controls.querySelector('[data-reset-background]')!.addEventListener('click', () => {
       save('site.appearance', null);
-      state = { image: safeImage(defaults.image), brightness: defaults.brightness };
+      state = { image: safeImage(defaults.image), brightness: defaults.brightness, rainEnabled: true };
       urlInput.value = defaults.image;
       apply(false);
       message.textContent = '已恢复网站默认背景和明暗。';
@@ -97,6 +108,8 @@
   .appearance-title { color: #fafafa; font-size: 1rem; margin-bottom: 1.25rem; }
   label { display: flex; justify-content: space-between; color: #d4d4d8; margin-top: 1rem; margin-bottom: .65rem; }
   input { width: 100%; accent-color: white; }
+  .rain-toggle { align-items: center; min-height: 32px; }
+  input[type=checkbox] { width: 1.1rem; height: 1.1rem; }
   input[type=url] { border: 1px solid #ffffff25; padding: .65rem; border-radius: .5rem; background: #ffffff08; color: white; font-size: .8rem; }
   .appearance-actions { display: flex; gap: .6rem; margin-top: .75rem; }
   button { padding: .55rem .7rem; border: 1px solid #ffffff30; border-radius: .5rem; cursor: pointer; color: #e4e4e7; }

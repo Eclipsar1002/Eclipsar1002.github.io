@@ -14,7 +14,7 @@ const dimOverlay = siteConfig.background.overlay;
 	id="rain-effect"
 	class="rain-effect"
 	data-rain-effect
-	data-rain-enabled={siteConfig.background.rain.enabled || undefined}
+	data-rain-enabled
 	data-background-image={backgroundImage}
 	style={`filter: blur(${siteConfig.background.blur}) brightness(${siteConfig.background.brightness})`}
 >
@@ -149,6 +149,7 @@ const dimOverlay = siteConfig.background.overlay;
 		);
 
 		if (!root || !canvas || !root.hasAttribute('data-rain-enabled')) {
+			destroyRainEffect();
 			return;
 		}
 

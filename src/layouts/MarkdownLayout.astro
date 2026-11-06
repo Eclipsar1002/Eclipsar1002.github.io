@@ -1,5 +1,6 @@
 ---
 import Layout from './Layout.astro';
+import PdfAttachments from '../components/PdfAttachments.astro';
 import { getLocaleFromUrl, getSiteConfig, localizePath } from '../config/site';
 import { getBlogImageAssets } from '../utils/blog-assets';
 import type { ReadingStats } from '../utils/reading-stats';
@@ -11,12 +12,13 @@ interface Props {
 	date?: Date;
 	tags?: string[];
 	cover?: string;
+	attachments?: Array<{ name: string; file: string }>;
 	readingStats?: ReadingStats;
 	backlinks?: Array<{ id: string; title: string; description: string }>;
 	heroTransitionName?: string;
 }
 
-const { title, description, date, tags = [], cover, readingStats, backlinks = [], heroTransitionName } = Astro.props;
+const { title, description, date, tags = [], cover, attachments = [], readingStats, backlinks = [], heroTransitionName } = Astro.props;
 const locale = getLocaleFromUrl(Astro.url);
 const siteConfig = getSiteConfig(locale);
 const imageAssets = getBlogImageAssets();
@@ -58,6 +60,7 @@ const formattedDate = date?.toLocaleDateString('zh-CN', {
 				/>
 			)}
 		</header>
+		<PdfAttachments files={attachments} />
 		<div class="prose-content mt-10">
 			<slot />
 		</div>

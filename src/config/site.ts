@@ -27,7 +27,7 @@ const shared = {
 		scale: 1,
 		overlay: "radial-gradient(circle at top left, rgba(255,255,255,0.12), transparent 30%), linear-gradient(180deg, rgba(5,5,5,0.55) 0%, rgba(0,0,0,0.65) 55%, rgba(9,9,9,0.95) 100%)",
 		rain: {
-			enabled: appearance.rainEnabled,
+			enabled: true,
 			mode: "falling",
 			density: 0.7,
 			speed: 1,
@@ -106,7 +106,6 @@ const siteConfigs = {
 					{ type: "linkGrid", props: { items: [
 						{ label: "学习记录", href: "/blog" },
 						{ label: "项目存档", href: "/projects" },
-						{ label: "个人迷思", href: "/about" },
 						{ label: "个人动态", href: "/moments/" },
 						{ label: "联系方式", href: "/contact" },
 					] } },
@@ -149,13 +148,6 @@ const siteConfigs = {
 								"二次元抽卡游戏重度爱好者；初音未来歌迷（看过演唱会版）；术力口倾听者；MMD苦手XD；超级社恐i人",
 								"关于我的专业领域以及研究兴趣，我自认为对此还没有足够的认知，暂且按下不表，希望未来的我能有足够的自信吧。",
 							],
-						},
-					},
-					{
-						type: "skillCloud",
-						props: {
-							title: "技能栈",
-							skills: ["Astro", "TypeScript", "Tailwind CSS", "Design Systems", "UX Engineering", "Content Strategy"],
 						},
 					},
 					{ type: "contactPanel" },

@@ -1,51 +1,65 @@
-<!-- Busuanzi counts real page views for this site's domain. No fabricated fallback number. -->
-<div hidden aria-hidden="true">
-  <span id="busuanzi_container_site_pv"><span id="busuanzi_value_site_pv"></span></span>
-</div>
-
 <script>
   let lastPage = '';
-  let observer: MutationObserver | undefined;
-  let pendingScript: HTMLScriptElement | undefined;
-  let timeout: ReturnType<typeof setTimeout> | undefined;
   let lastCount = '';
+  let cleanup = () => {};
 
   function showCount(count: string) {
     const el = document.querySelector<HTMLElement>('[data-visitor-count]');
     if (el) el.textContent = (el.dataset.template || '访客编号 #{count}').replace('{count}', count);
   }
-  function updateCounter() {
-    const page = location.pathname;
-    if (page === lastPage) { if (lastCount) showCount(lastCount); return; }
-    lastPage = page;
-    observer?.disconnect();
-    pendingScript?.remove();
-    clearTimeout(timeout);
-    const value = document.getElementById('busuanzi_value_site_pv');
-    if (!value) return;
-    value.textContent = '';
-    observer = new MutationObserver(() => {
-      const count = value.textContent?.trim() || '';
-      if (!/^\d+$/.test(count)) return;
-      lastCount = count;
-      showCount(count);
-      clearTimeout(timeout);
-      observer?.disconnect();
-    });
-    observer.observe(value, { childList: true, characterData: true, subtree: true });
-    pendingScript = document.createElement('script');
-    pendingScript.src = 'https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js';
-    pendingScript.async = true;
-    pendingScript.referrerPolicy = 'no-referrer-when-downgrade';
-    const unavailable = () => {
-      if (lastCount) { showCount(lastCount); return; }
-      const el = document.querySelector<HTMLElement>('[data-visitor-count]');
-      if (el) el.textContent = '欢迎来到互联网的小角落 · 访问统计暂不可用';
+  function updateCounter(force = false) {
+    const el = document.querySelector<HTMLElement>('[data-visitor-count]');
+    if (!el) { lastPage = ''; cleanup(); return; }
+    if (!force && lastPage === location.pathname) { if (lastCount) showCount(lastCount); return; }
+    cleanup();
+    lastPage = location.pathname;
+    const callback = `AtlasVisits_${crypto.randomUUID().replaceAll('-', '')}`;
+    const globals = window as unknown as Record<string, unknown>;
+    const script = document.createElement('script');
+    let settled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const dispose = () => {
+      clearTimeout(timer);
+      script.remove();
+      // A response already in flight may still execute after navigation/timeout.
+      globals[callback] = () => {};
+      setTimeout(() => { delete globals[callback]; }, 60000);
     };
-    pendingScript.onerror = unavailable;
-    timeout = setTimeout(unavailable, 12000);
-    document.head.append(pendingScript);
+    cleanup = () => { settled = true; dispose(); };
+    function unavailable() {
+      if (settled) return;
+      settled = true;
+      dispose();
+      const current = document.querySelector<HTMLElement>('[data-visitor-count]');
+      if (!current) return;
+      current.textContent = lastCount ? `上次读取的累计访问：${lastCount} · ` : '访问统计连接失败 · ';
+      const retry = document.createElement('button');
+      retry.type = 'button';
+      retry.textContent = '重试';
+      retry.style.textDecoration = 'underline';
+      retry.addEventListener('click', () => updateCounter(true), { once: true });
+      current.append(retry);
+      current.title = '统计服务可能被网络或浏览器扩展拦截；不影响其他功能。';
+    }
+    globals[callback] = (data: { site_pv?: number }) => {
+      if (settled) return;
+      if (!Number.isSafeInteger(data?.site_pv) || data.site_pv! < 0) { unavailable(); return; }
+      settled = true;
+      lastCount = String(data.site_pv);
+      showCount(lastCount);
+      dispose();
+    };
+    script.src = `https://busuanzi.ibruce.info/busuanzi?jsonpCallback=${callback}`;
+    script.async = true;
+    script.referrerPolicy = 'origin';
+    script.onerror = unavailable;
+    timer = setTimeout(unavailable, 15000);
+    if (lastCount) showCount(lastCount);
+    else el.textContent = '正在读取访问统计…';
+    document.head.append(script);
   }
   updateCounter();
-  document.addEventListener('astro:page-load', updateCounter);
+  document.addEventListener('astro:page-load', () => updateCounter());
+  document.addEventListener('astro:before-swap', () => { cleanup(); lastPage = ''; });
+  window.addEventListener('online', () => updateCounter(true));
 </script>

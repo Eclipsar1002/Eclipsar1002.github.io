@@ -1,442 +1,162 @@
-# 🗺️Atlas
+# Eclipsar 的个人网站
 
-中文 | [English](./README.en.md)
+记录学习、项目、博客笔记、照片与日常碎片的个人空间。基于 **Atlas** 模板继续开发，使用 Astro 构建静态页面，通过 GitHub Pages 托管；写作后台使用 Decap CMS，GitHub OAuth 登录由 Cloudflare Worker 处理。
 
-Atlas 是一个黑色系 [Astro](https://astro.build) 个人网站模板
+- 网站：<https://eclipsar1002.github.io/>
+- 写作后台：<https://eclipsar1002.github.io/admin/>
+- 个人动态：<https://eclipsar1002.github.io/moments/>
+- 源代码：<https://github.com/Eclipsar1002/Eclipsar1002.github.io>
 
-模板使用 Astro Content Collections 管理博客和项目数据，内容以 Markdown 维护，适合长期更新和二次修改。
+## 来源与致谢
 
-## ✨ Demo
+网站由多个开源项目和教程支持。这里区分模板来源、实际使用的依赖，以及设计和实现参考；不代表这些项目的作者参与或背书本站。
 
-[![Astro 6](https://img.shields.io/badge/Astro-6-ff5d01?style=for-the-badge&logo=astro&logoColor=white)](https://astro.build/)
-[![Tailwind CSS 4](https://img.shields.io/badge/Tailwind_CSS-4-38bdf8?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-![Node.js >= 22.12](https://img.shields.io/badge/Node.js-%3E%3D22.12-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
-![Static or Node SSR](https://img.shields.io/badge/Output-Static%20%2F%20Node%20SSR-111827?style=for-the-badge)
+| 项目 | 在本站中的作用 |
+| --- | --- |
+| [luckykevvv/Atlas](https://github.com/luckykevvv/Atlas) | 原始网站模板来源。本站沿用并修改其 Astro 项目结构、页面模块、内容集合、博客排版、项目页、知识图谱和基础视觉设计；保留原项目的 GPL-3.0 许可证。 |
+| [Hiweny/rain · 听雨](https://github.com/Hiweny/rain/tree/main/) | 雨景氛围和听雨网站的设计参考，按站主说明记录来源。本站当前实际渲染玻璃雨滴的代码使用下列 raindrop-fx 库，不将两个项目混为同一来源。 |
+| [SardineFish/raindrop-fx](https://github.com/SardineFish/raindrop-fx) | 实际安装并使用的 WebGL 雨滴依赖，版本 1.0.8，MIT。`RainEffect.astro` 负责背景图、性能分级、页面切换和外观开关联动。 |
+| [JIEJOE-WEB-Tutorial/017-audio-wave](https://github.com/JIEJOE-WEB-Tutorial/017-audio-wave) | 音乐封面周围的径向白色音频线条实现参考。将原教程的 PCM 分组振幅方法改为读取当前播放音频的实时 PCM，并调整线条数量、宽度、振幅和平滑参数。MIT 声明保存在 [public/licenses/jiejoe-audio-wave.txt](public/licenses/jiejoe-audio-wave.txt)。 |
+| [WenqiOfficial/StudyWithMiku](https://github.com/WenqiOfficial/StudyWithMiku) | 音乐歌单接入方式的参考：使用 Meting 兼容接口读取网易云歌单。本站播放器、共享 Audio 生命周期和控制界面由本仓库维护，不直接使用其整站播放器。 |
+| [metowolf/Meting](https://github.com/metowolf/Meting) | 音乐 API 生态与协议来源。本站通过第三方 Meting 兼容服务获取歌单和音频链接，未在 GitHub Pages 中部署 PHP Meting 服务。 |
+| [decaporg/decap-cms](https://github.com/decaporg/decap-cms) | 浏览器写作和媒体上传后台，当前加载 Decap CMS 3.17.3。内容通过 GitHub backend 提交。 |
+| [withastro/astro](https://github.com/withastro/astro) | Astro 6 静态构建、路由、内容集合和页面导航。 |
+| [tailwindlabs/tailwindcss](https://github.com/tailwindlabs/tailwindcss) | Tailwind CSS 4 样式。 |
+| [KaTeX/KaTeX](https://github.com/KaTeX/KaTeX) | 博客数学公式渲染。 |
+| [不蒜子](https://busuanzi.ibruce.info/) | 第三方累计访问统计服务。页面通过 JSONP 读取本站访问次数。 |
 
-🌐 在线预览：[https://blog.chihaya-anon.uk/](https://blog.chihaya-anon.uk/)
+感谢上述作者和维护者。完整依赖版本见 `package.json` 和 `package-lock.json`，各第三方项目保留自己的许可条件。歌曲、封面、个人照片及 PDF 的版权属于各自权利人，不因代码开源而自动获得再分发授权。
 
-🌧️ 可配置背景、雨滴动画、双语导航、状态卡片和个人入口都在这个 Demo 里。
+原 Atlas 模板说明保存在 [instruction/atlas-original-readme.md](instruction/atlas-original-readme.md)，便于追溯原有功能与用法。本站当前功能以下文为准。
 
-![Atlas demo screenshot](./public/demo.png)
+## 当前功能
 
-## ✨特性
+- **首页**：个人介绍、快捷入口、精选项目、最新博客和音乐播放器。
+- **项目**：项目列表和 Markdown 详情，支持日期、角色、标签、精选、演示网址、源码仓库及 PDF 附件。
+- **博客**：Markdown、标签、封面、公式、阅读统计、双链和知识图谱，支持 PDF 附件。
+- **个人动态**：按时间倒序展示碎碎念、多张照片、可选标题和标签。原简历地址跳转至动态页。
+- **外观**：右下角面板即时调整亮度、背景图片和雨滴开关，设置保存在当前浏览器；后台只管理全站默认背景、亮度、模糊和歌单。
+- **音乐**：网易云歌单、顺序/随机/单曲模式、音质和进度/音量控制。圆形封面与实时 PCM 音频线条；默认歌单 ID 为 `18085490924`。共享 Audio 在站内导航时继续播放。
+- **访问统计**：使用不蒜子统计累计访问，显示真实返回值；连接失败提供重试，不生成虚假编号。
+- **网页管理**：GitHub 登录后可管理文章、项目、动态、图片、PDF 和网站默认设置。
 
-- [x] 黑色系视觉风格，适合学生个人主页和作品集
-- [x] 首页包含头像、状态卡片、快捷入口、项目和最新笔记
-- [x] 内置关于、项目、博客、简历、联系方式页面
-- [x] 集成中英文多语言：中文默认路径，英文路径为 `/en/`
-- [x] 博客使用 Markdown 编写
-- [x] 项目详情使用 Markdown 编写
-- [x] 主要站点文案集中在 `src/config/site.ts`
-- [x] 使用 `src/content.config.ts` 定义 Content Collections
-- [x] 使用 Tailwind CSS v4 和 `@tailwindcss/vite`
-- [x] 默认静态输出，可选 Node SSR 动态模式用于 Steam 实时状态等服务端功能
+## 本地运行
 
-## 2025.05.23 更新
-
-本次更新主要是功能和工程结构调整，不包含具体个人文案内容：
-
-- 新增可配置背景系统：支持背景图片、模糊、透明度、缩放、遮罩和雨滴动画控制
-- 背景雨动画支持两种模式：`falling` 从上往下落雨，`front` 正对屏幕下雨并产生涟漪
-- 首页服务入口和关于页服务列表解耦，分别使用 `home.services` 和 `pages.about.services`
-- 简历页新增 PDF 下载入口，PDF 可放在 `public/` 并通过 `resume.files` 配置，可配置多个文件
-- 简历项目条目新增 `link` 字段，支持为单个项目配置多个跳转按钮和自定义按钮名称
-- 简历数据结构整理为 `summary`、`details`、`links`、`highlights`、`sections`
-- 移除旧的未使用字段，如 `experience`、`location`、`locationLabel`
-- 新增图标组件，社交链接、快捷入口和邮箱图标支持图片 URL
-- 新增知识图谱页面和双链支持，博客可以通过 wiki link 建立文章关系
-- 博客动态路由调整为多级路径，方便按课程或主题组织 Markdown 文件
-- 新增动态开发入口和 PM2 生产运行方式，用于需要服务端能力的部署
-
-## 2025.05.28 更新
-
-本次更新为页面模块化重构，将固定页面从硬编码组件改为可配置的模块系统：
-
-- 页面模块化：所有固定页面改为通过 `PageRenderer` 动态渲染 `pages` 配置中的模块数组
-- 新增 `src/modules/` 目录，包含 14 个可复用模块组件，覆盖首页、关于、项目、博客、图谱、简历、联系等页面
-- 模块类型定义集中在 `src/modules/types.ts`，新增模块只需实现组件并在 `types.ts` 添加类型条目
-- 新增自定义页面支持：通过站点配置中的 `customPages` 即可生成新页面，无需额外创建 Astro 路由文件
-- 清理冗余配置字段：移除页面层级的 `kicker`/`heading`/`intro`（数据已在模块 props 中维护），移除 `home.services`/`home.projects`/`home.notes` 废弃字段，移除 `downloadResumeLabel`
-- 本地化逻辑统一：新增 `localizeModuleLinks` 函数自动处理模块内链接的多语言转换，替代旧的页面级 `services.map` 方案
-- 新增动态服务器模式：通过 `npm run setup` 交互式选择静态或 Node SSR 模式，支持 Steam 实时状态和访客计数等需要服务端的动态功能
-- 新增 Steam 状态 API 和首页 Steam 状态徽章，实时显示在线状态和当前游戏
-- 新增 Steam 资料卡组件，关于页通过 `steamProfile` 模块展示 Steam 个人资料和游戏记录
-- 新增 `gameList` 模块，关于页支持配置自定义条目列表（游戏、兴趣领域等），支持图标和链接
-- 首页问候语和 Steam 状态修复，语言切换后自动刷新
-- 新增 PM2 生产运行支持（`npm run pm2:start`）
-- 示例 `site.ts` 同步更新，展示完整的模块化配置示例
-
-## 📝项目结构
-
-```text
-src/
-  components/        可复用 UI 组件
-  modules/           可复用页面模块组件
-  config/            站点文案、导航、社交链接和经历数据
-  content/           博客和项目 Markdown 内容
-  layouts/           基础布局和 Markdown 布局
-  pages/             页面路由
-  styles/            全局 Tailwind 样式
-public/
-  avatar.png         默认头像占位图
-  favicon.svg        浏览器标签页图标
-```
-
-## 🚀快速开始
-
-安装依赖：
+需要 Node.js **22.12 或更新版本**，推荐 Node.js 22 LTS。
 
 ```sh
-npm install
-```
-
-也可以使用交互式安装脚本选择静态模式或动态服务器模式：
-
-```sh
-npm run setup
-```
-
-启动开发服务器：
-
-```sh
+npm ci
 npm run dev
 ```
 
-构建生产版本：
+构建、预览和认证服务测试：
 
 ```sh
 npm run build
-```
-
-本地预览生产版本：
-
-```sh
 npm run preview
+node --test services/cms-auth/worker.test.mjs
 ```
 
-## 📝自定义模板
+访问终端输出的本地地址。默认发布采用静态模式，直接上传 `dist/` 即可。模板仍保留 Node SSR/Steam 等代码，但 GitHub Pages 上不运行 Node 服务，不能将这些 API 当作线上动态服务使用。
 
-大部分模板文案都在：
+## 后台日常使用
+
+1. 打开 `/admin/`，点击 GitHub 登录；本站认证服务仅允许配置的站主账号。
+2. 选择 **文章 / 项目 / 个人动态 / 网站设置**。
+3. 新建或编辑内容，上传媒体，然后保存发布。
+4. 后台将内容提交到 `main`，GitHub Actions 自动构建、测试并部署整个网站。
+5. 等待 [Actions](https://github.com/Eclipsar1002/Eclipsar1002.github.io/actions) 中对应提交的构建与部署都成功，再刷新前台。
+
+**后台保存成功不等于网站立即上线。** GitHub Pages 的部署可能需要数分钟；连续提交还可能排队。若未显示，先检查 Actions 是否失败或仍在运行，不要反复创建同一条动态。部署成功后旧页面仍未更新，可使用 `Ctrl+F5` 或手机浏览器重新加载。
+
+### 项目管理
+
+项目后台可以编辑标题、简介、日期、语言、角色/类别、标签、正文、项目网址、源码链接及附件。开启“首页精选”后，该项目才会参与首页精选列表，项目列表仍显示全部项目。中文为当前主要站点语言，旧英文路径保留兼容。
+
+### 上传 PDF
+
+在文章或项目的 **PDF 附件 → 新增** 中，填写显示名称并上传 PDF，可添加多个附件。保存发布后，详情页提供“打开 PDF”和“下载”入口；手机可以在新标签页打开文档，不依赖内嵌阅读器。
+
+媒体文件保存于 `public/uploads/`，网站地址为 `/uploads/文件名.pdf`。建议使用简短且不重复的文件名，并先压缩大型文件；GitHub 普通 Git 单文件存在 100 MiB 上限，图片和 PDF 也会使仓库历史持续增大。
+
+内容示例：
+
+```yaml
+attachments:
+  - name: 项目报告
+    file: /uploads/project-report.pdf
+```
+
+后台和源仓库均为公开内容工作流。上传的照片、PDF、已提交的草稿与历史版本都可能公开；删除网页中的附件链接不会自动清除 Git 历史。
+
+### 外观和雨滴
+
+- 右下角“外观”：修改当前浏览器的显示偏好，雨滴开关立即生效，无需等待部署。
+- 后台“网站设置 → 背景与音乐”：修改全站默认背景、亮度、模糊和歌单，保存后需要等待部署。
+- 浏览器已经保存的背景/亮度优先于全站默认值；“恢复默认”会清除本地偏好并恢复默认开启的雨滴。
+- 雨滴需要 WebGL2；浏览器不支持或初始化失败时保留静态背景。移动设备会降低密度和渲染分辨率。
+
+### 访问统计说明
+
+当前数字表示第三方返回的累计页面访问次数（PV），不是去重人数、在线人数，也不是给每个人分配永久编号。显示计数的首页在加载/返回时请求统计；没有展示计数的页面不额外发送统计请求。
+
+统计依赖外部服务和页面来源信息。实现显式发送站点 Origin 作为 Referer，直接处理 JSONP 返回值，并清理站内导航的旧请求；不依赖隐藏 DOM 或第三方脚本的全局变量。网络故障、广告拦截或隐私扩展仍可能阻止统计，失败时可以点击“重试”。重试也是一次统计请求，可能增加 PV。
+
+### 音乐说明
+
+歌单来自第三方 Meting 兼容接口，当前依次尝试 qijie、injahow、xiaoguan 和 i-meto；服务可用性、授权状态、地区限制、音频格式和链接有效期均由上游决定。前端不存储歌曲文件，也不保证每首歌或每种音质均可用。实时可视化需要音频资源允许跨域访问。
+
+移动浏览器通常要求用户主动点击播放。本站没有音乐自动播放保证；iOS 的音量、后台播放和音频格式支持由系统与浏览器决定。
+
+## 部署结构与配置
 
 ```text
-src/config/site.ts
+浏览器 → GitHub Pages 静态页面
+写作后台 → Cloudflare Worker OAuth → GitHub 登录
+后台内容提交 → main 分支 → GitHub Actions → GitHub Pages
 ```
 
-你可以在这里修改：
-
-- 站点名称和描述
-- 中英文站点文案
-- 导航菜单
-- 头像路径
-- 社交链接
-- 首页标题、简介和按钮
-- 状态卡片
-- 快捷入口
-- 关于我、项目、博客、简历、联系页面文案
-- 技能和经历
-- 通用按钮文案
-
-### 页面模块
-
-固定页面现在也从 `src/config/site.ts` 的 `pages` 配置生成。每个页面包含 `title`、`description` 和 `modules`，页面顺序就是 `modules` 数组顺序：
-
-```ts
-pages: {
-  about: {
-    title: '关于我',
-    description: '关于我的个人介绍',
-    modules: [
-      {
-        type: 'aboutIntro',
-        props: {
-          kicker: 'About',
-          heading: '关于我',
-          profileLabel: 'Profile',
-          profile: '学生 / 开发者',
-          paragraphs: ['这里写介绍。'],
-        },
-      },
-      { type: 'steamProfile' },
-      {
-        type: 'gameList',
-        props: {
-          title: '最近在玩',
-          description: '欢迎来找我玩',
-          items: [
-            { label: 'Game Name', gameId: 123, icon: '/game/icon.png', href: 'https://example.com' },
-          ],
-        },
-      },
-      { type: 'contactPanel' },
-    ],
-  },
-}
-```
-
-可用模块类型在 `src/modules/types.ts` 里维护。目前内置模块包括：
-
-- `homeHero`：首页首屏、状态卡和 Steam 小徽章
-- `linkGrid`：首页快捷入口
-- `projectGrid` / `projectList`：项目列表
-- `blogPreview` / `blogIndex`：博客预览和博客索引
-- `aboutIntro`：关于页介绍
-- `steamProfile`：Steam 资料卡
-- `gameList`：自定义游戏/条目列表，支持 `icon`、`href`、`gameId`
-- `skillCloud`：技能标签云
-- `knowledgeGraph`：知识图谱
-- `resume`：简历页主体
-- `contactCards`：联系方式卡片
-- `contactPanel`：底部联系区块
-- `pageHeader`：通用页面标题
-- `richText`：简单文本段落
-
-博客详情页和项目详情页仍然来自 `src/content/` 的 Markdown；模块系统负责列表页、固定页面和自定义页面。
-
-### 自定义页面
-
-你可以在对应语言配置里添加 `customPages`，不用新增 Astro 页面文件：
-
-```ts
-customPages: [
-  {
-    path: '/uses',
-    title: '我的工具',
-    description: '常用设备和软件',
-    modules: [
-      {
-        type: 'pageHeader',
-        props: {
-          kicker: 'Uses',
-          heading: '我的工具',
-          intro: '这里记录我常用的工具。',
-        },
-      },
-      {
-        type: 'richText',
-        props: {
-          body: ['第一段内容。', '第二段内容。'],
-        },
-      },
-    ],
-  },
-]
-```
-
-中文配置里的自定义页面会生成 `/uses/`，英文配置里的自定义页面会生成 `/en/uses/`。`about`、`blog`、`contact`、`graph`、`projects`、`resume` 是固定页面根路径，不能被 `customPages` 覆盖。
-
-## 多语言
-
-Atlas 默认使用中文页面，英文页面路径为：
+主要文件：
 
 ```text
-/en/
-/en/about/
-/en/projects/
-/en/blog/
-/en/resume/
-/en/contact/
+src/config/site.ts              站点介绍、导航、页面模块、联系方式
+src/config/appearance.json      全站默认背景、亮度、模糊、歌单
+src/content.config.ts          博客/项目/动态的数据校验
+src/content/blog/              博客 Markdown
+src/content/projects/          项目 Markdown
+src/content/moments/           动态 Markdown
+src/components/                播放器、雨滴、外观、统计和附件等组件
+src/lib/audio-spectrum.ts      实时 PCM 径向音频线条
+src/lib/meting.ts              歌单提供方与音质配置
+public/admin/                  Decap CMS 页面、编辑字段、认证服务地址
+public/uploads/                图片与 PDF
+public/licenses/               第三方署名声明
+services/cms-auth/              Cloudflare Worker 认证源码及测试
+.github/workflows/deploy.yml    构建、认证测试与 Pages 部署
+instruction/admin-setup.md     OAuth 一次性配置步骤
 ```
 
-语言配置在：
+### GitHub Pages
 
-```text
-src/config/site.ts
-```
+在仓库 **Settings → Pages → Source** 选择 **GitHub Actions**。工作流监听 `main` 的推送，也可手动运行。构建执行 `npm ci`、`npm run build` 和认证测试，再上传 `dist/` 并部署；仓库需要允许 Pages 与 Actions 所需权限。
 
-其中 `zh` 是中文配置，`en` 是英文配置。Header 会自动显示语言切换按钮。
+迁移到其他账号或域名时，同时更新 Astro 的站点配置（如有）、CMS 的 `repo/site_url/display_url`、Worker 的 `SITE_ORIGIN/GITHUB_USER` 和 OAuth 应用回调地址。
 
-博客默认只有一份内容，中英文页面都会显示同一批文章。项目可以通过 frontmatter 的 `lang` 字段区分中英文版本：
+### Cloudflare OAuth
 
-```md
----
-lang: "zh"
-title: "中文项目"
----
-```
+部署 `services/cms-auth/worker.mjs`，设置以下运行时变量：
 
-```md
----
-lang: "en"
-title: "English Project"
----
-```
+| 变量 | 用途 |
+| --- | --- |
+| `SITE_ORIGIN` | 允许接收登录结果的网站 Origin，如 `https://eclipsar1002.github.io` |
+| `GITHUB_USER` | 允许管理网站的 GitHub 用户，如 `Eclipsar1002` |
+| `GITHUB_CLIENT_ID` | GitHub OAuth 应用 Client ID |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth 应用密钥，仅存于 Cloudflare Secret |
 
-替换默认头像：
+OAuth 回调设置为 `https://你的-worker.workers.dev/callback`；`public/admin/settings.json` 的 `authBaseUrl` 填 Worker 的 HTTPS Origin。`/health` 供健康检查，`/auth?provider=github` 发起授权。服务使用 HttpOnly/Secure 状态 Cookie、校验 OAuth state、限制 GitHub 账号，并将结果发送到指定站点 Origin。
 
-```text
-public/avatar.png
-```
+GitHub 授权请求使用 `public_repo`，不是单仓库权限。不要把 OAuth 密钥或个人访问令牌提交到仓库。详细步骤见 [后台接入说明](instruction/admin-setup.md)。
 
-替换浏览器标签页图标：
+## 许可证
 
-```text
-public/favicon.svg
-```
-
-社交链接图标可以在 `src/config/site.ts` 的 `socials` 中设置。`icon` 支持短文本，也支持图片地址：
-
-```ts
-{ label: 'GitHub', href: 'https://github.com/yourname', icon: 'https://cdn.simpleicons.org/github/white' }
-```
-
-邮箱图标可以通过同一个配置文件里的 `emailIcon` 修改：
-
-```ts
-emailIcon: 'https://cdn.simpleicons.org/gmail/white'
-```
-
-首页标题、页面标题、简介和底部联系区块标题支持 `\n` 手动换行：
-
-```ts
-headline: '第一行\n第二行'
-```
-
-## 内容管理
-
-博客文章放在：
-
-```text
-src/content/blog/
-```
-
-项目内容放在：
-
-```text
-src/content/projects/
-```
-
-博客示例：
-
-```md
----
-title: "我的第一篇笔记"
-description: "这是一段笔记摘要。"
-pubDate: 2026-05-20
-tags: ["Astro", "学习"]
-draft: false
----
-
-在这里写你的笔记正文。
-```
-
-项目示例：
-
-```md
----
-lang: "zh"
-title: "课程 Dashboard"
-description: "一个为课程作业制作的小型看板。"
-date: 2026-05-20
-tags: ["Astro", "Tailwind"]
-role: "课程项目"
-featured: true
----
-
-在这里写你的项目介绍。
-```
-
-## 双链和知识图谱
-
-博客 Markdown 支持类似 Obsidian 的双链语法：
-
-```md
-[[design-engineering]]
-[[astro-content-collections|Astro 内容集合]]
-```
-
-构建或动态开发模式下会自动转换成站内博客链接。每篇文章底部会显示“反向链接”，列出提到当前文章的其他笔记。
-
-双链默认按文件名解析，不需要写完整目录。比如文件在：
-
-```text
-src/content/blog/course-notes/week-02-expectation.md
-```
-
-可以直接写：
-
-```md
-[[week-02-expectation]]
-```
-
-如果不同目录下出现同名文件，再写完整路径：
-
-```md
-[[course-notes/week-02-expectation]]
-```
-
-知识图谱页面位于：
-
-```text
-/graph
-```
-
-图谱会扫描博客文章、标签和双链关系。文章节点可以点击跳转到对应博客。
-
-## 部署
-
-Atlas 会构建为 `dist/` 里的静态文件：
-
-```sh
-npm run build
-```
-
-你可以把它部署到任意静态托管平台。Astro 官方部署说明见 [Astro Deployment Guide](https://docs.astro.build/en/guides/deploy/)。
-
-## 动态更新模式
-
-Atlas 默认可以作为静态站点构建。如果你希望启用需要服务端的功能，例如 Steam 实时状态，请使用动态服务器模式：
-
-```sh
-npm install
-npm run build:dynamic
-npm run start
-```
-
-默认监听：
-
-```text
-http://服务器IP:4321
-```
-
-Steam 状态和服务器监听配置统一写入 `.env`：
-
-```sh
-STEAM_API_KEY=你的 Steam Web API Key
-STEAM_ID_64=你的 64 位 Steam ID
-HOST=0.0.0.0
-PORT=4321
-ATLAS_DATA_DIR=.atlas-data
-```
-
-Steam 个人资料和游戏状态需要允许公开，否则只能显示离线或不可用状态。动态访客计数会写入 `ATLAS_DATA_DIR` 下的本地 JSON 文件。不要提交真实 `.env`，仓库只提供 `.env.example` 模板；如果 `.env` 与系统环境变量同名，项目以 `.env` 为准。
-
-更适合长期运行的方式是 PM2，`pm2:start` 会先构建动态版本再启动生产服务器：
-
-```sh
-npm install
-npm install -g pm2
-npm run pm2:start
-pm2 save
-```
-
-常用命令：
-
-```sh
-npm run pm2:restart
-npm run pm2:stop
-npm run pm2:logs
-npm run pm2:delete
-```
-
-动态模式会生成 Node SSR 服务器，而不是只生成可直接托管的静态文件。适合个人站、内网预览或你自己维护的 VPS；如果公开访问，建议前面加 Nginx / Caddy 反向代理和 HTTPS。
-
-如果只需要静态站点，不启用 Steam 实时状态，继续使用：
-
-```sh
-npm install --omit=optional
-npm run build
-```
-
-## License
-
-本项目基于 [GNU General Public License v3.0](./LICENSE) 开源。
+本仓库延续 Atlas 的 [GNU GPL v3.0](LICENSE)，保留原作者版权及许可声明。第三方依赖和参考代码遵循各自许可证；音频线条改编所需 MIT 声明随仓库提供。本站文章、图片、音乐和附件等内容不因源代码许可证而自动适用同一授权。

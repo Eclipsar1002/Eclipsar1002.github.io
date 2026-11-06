@@ -36,7 +36,40 @@ collections:
       - { label: 最后修改时间, name: updatedDate, widget: datetime, required: false, format: 'YYYY-MM-DDTHH:mm:ssZ' }
       - { label: 标签, name: tags, widget: list, default: [], required: false }
       - { label: 封面, name: cover, widget: image, required: false, allow_multiple: false }
+      - &pdfAttachments
+        name: attachments
+        label: PDF 附件
+        widget: list
+        required: false
+        default: []
+        summary: '{{fields.name}}'
+        fields:
+          - { label: 显示名称, name: name, widget: string, default: PDF 附件 }
+          - { label: PDF 文件, name: file, widget: file, allow_multiple: false, media_library: { config: { accept: application/pdf } }, hint: '上传 PDF 后，详情页会显示打开和下载入口。文件将进入公开仓库。' }
       - { label: 正文, name: body, widget: markdown, required: false, hint: '支持 Markdown。公式和双链在发布后由网站渲染。保存发布的内容会进入公开仓库。' }
+
+  - name: projects
+    label: 项目
+    label_singular: 项目
+    folder: src/content/projects
+    create: true
+    extension: md
+    format: yaml-frontmatter
+    slug: '{{slug}}'
+    summary: '{{title}}'
+    sortable_fields: [date, title]
+    fields:
+      - { label: 标题, name: title, widget: string }
+      - { label: 简介, name: description, widget: text }
+      - { label: 日期, name: date, widget: datetime, format: YYYY-MM-DD, time_format: false }
+      - { label: 语言, name: lang, widget: select, options: [{ label: 中文, value: zh }, { label: English, value: en }], default: zh }
+      - { label: 角色或类别, name: role, widget: string }
+      - { label: 标签, name: tags, widget: list, default: [], required: false }
+      - { label: 首页精选, name: featured, widget: boolean, default: false }
+      - { label: 项目网址, name: url, widget: string, required: false, hint: '请填写完整 HTTPS 地址；没有时留空。' }
+      - { label: 源码仓库, name: repo, widget: string, required: false }
+      - *pdfAttachments
+      - { label: 正文, name: body, widget: markdown, required: false }
 
   - name: moments
     label: 个人动态
@@ -75,5 +108,4 @@ collections:
           - { label: 背景图片, name: backgroundImage, widget: image, allow_multiple: false }
           - { label: 背景亮度, name: brightness, widget: number, value_type: float, min: 0.1, max: 1, step: 0.05, hint: '0.1 最暗，1 最亮。发布后成为所有访客的默认值。' }
           - { label: 背景模糊（像素）, name: backgroundBlur, widget: number, value_type: int, min: 0, max: 30, step: 1 }
-          - { label: 背景雨滴, name: rainEnabled, widget: boolean, default: false }
           - { label: 默认网易云歌单 ID, name: playlistId, widget: string, pattern: ['^\d+$', '请输入纯数字歌单 ID'] }
