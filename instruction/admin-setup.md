@@ -14,6 +14,23 @@
 
 ## 1. 部署免费的认证服务
 
+### 如果使用 Workers Builds 连接 GitHub 自动部署认证服务
+
+`eclipsar-cms-auth` 是登录认证 Worker，不是 Astro 网站。网站目前由 GitHub Pages 工作流部署。
+
+- Root directory：仓库根目录 `/`。
+- Build command：留空；如果控制台要求非空，可用 `echo "No build required"`。
+- Deploy command：`npx wrangler deploy --config services/cms-auth/wrangler.toml`。
+- Cloudflare Worker 名称应与该配置中的 `name = "eclipsar-cms-auth"` 一致。
+- 若设置非生产分支部署命令，使用 `npx wrangler versions upload --config services/cms-auth/wrangler.toml`。
+- 在构建监听路径中仅包含 `services/cms-auth/**`，避免每次发布博客或动态都重复部署登录服务。
+
+不要在此 Worker 上执行 `npm run build` 来发布网站，也不要为它添加 `[assets] directory = "./dist"`，否则会混淆登录服务与静态网站。`main = "worker.mjs"` 相对于 `services/cms-auth/wrangler.toml` 所在目录解析，因此指向同目录的认证入口。
+
+认证运行时仍需保留后文列出的四个变量，其中 Client secret 必须是 Secret。若诊断部署失败，在完整构建日志中查看 Wrangler 通用反馈提示之前的第一条错误；可临时设置构建环境变量 `WRANGLER_LOG=debug` 获取更详细日志，不要公开含凭据的日志。
+
+若另建静态网站 Worker，应使用独立名称与单独的 assets 配置，并另外调整站点域名、CMS `site_url`、OAuth 应用 Homepage 和认证 `SITE_ORIGIN`；不能直接复用此认证 Worker。
+
 在 Cloudflare 注册账号后，进入 **Workers & Pages → Create → Worker → Hello World**。
 不同版本控制台的按钮名称可能略有不同。Worker 命名为 `eclipsar-cms-auth`，选择免费的 workers.dev 域名。
 
