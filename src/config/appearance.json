@@ -2,6 +2,6 @@
   "backgroundImage": "/demo.png",
   "brightness": 0.65,
   "backgroundBlur": 0,
-  "rainEnabled": false,
+  "rainEnabled": true,
   "playlistId": "18085490924"
 }
