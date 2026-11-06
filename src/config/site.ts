@@ -152,19 +152,6 @@ const siteConfigs = {
 						},
 					},
 					{
-						type: "gameList",
-						props: {
-							title: "主页可以放什么",
-							description: "这些模块都可以在 src/config/site.ts 里替换成自己的栏目。",
-							items: [
-								{ label: "学习记录", description: "记录课程、阅读、实验和阶段性复盘。" },
-								{ label: "项目作品", description: "展示课程作业、开源项目和个人练手。" },
-								{ label: "博客笔记", description: "用 Markdown 把想法留下来，支持标签和双链。" },
-								{ label: "个人动态", description: "照片、日常碎片，还有偶尔想说的话。", href: "/moments/" },
-							],
-						},
-					},
-					{
 						type: "skillCloud",
 						props: {
 							title: "技能栈",
