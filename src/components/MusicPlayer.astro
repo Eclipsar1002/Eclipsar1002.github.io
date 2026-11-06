@@ -1,344 +1,81 @@
 ---
-import {
-  DEFAULT_PLAYLIST_ID,
-  DEFAULT_BITRATE,
-  autoQuality,
-  QUALITY_OPTIONS,
-} from '../lib/meting';
-
-interface Props {
-  playlistId?: string;
-  compact?: boolean;
-}
-
-const {
-  playlistId = DEFAULT_PLAYLIST_ID,
-  compact = true,
-} = Astro.props;
+import { DEFAULT_PLAYLIST_ID } from '../lib/meting';
+interface Props { playlistId?: string; compact?: boolean }
+const { playlistId = DEFAULT_PLAYLIST_ID, compact = true } = Astro.props;
+const bars = Array.from({ length: 48 }, (_, i) => ({ angle: i * 360 / 48 }));
 ---
 
-<div
-  class="music-player"
-  data-music-player
-  data-compact={compact}
-  data-playlist-id={playlistId}
->
-  <div class="mp-tabs">
-    <button class="mp-mode-btn" data-mode-btn type="button">
-      <span data-mode-label>顺序</span>
-    </button>
-
-    <button class="mp-quality-btn" data-quality-btn type="button">
-      <span data-quality-label>标准</span>
-    </button>
-
-    <input
-      class="mp-playlist-input"
-      data-playlist-input
-      type="text"
-      inputmode="numeric"
-      placeholder="歌单 ID"
-      autocomplete="off"
-      aria-label="网易云歌单 ID"
-    />
+<div class="music-player" data-music-player data-compact={compact} data-playlist-id={playlistId}>
+  <div class="mp-left">
+    <p class="mp-kicker">A little soundtrack</p>
+    <div class="mp-tabs">
+      <button class="mp-mode-btn" data-mode-btn type="button" aria-label="切换播放模式"><span data-mode-label>顺序</span><span aria-hidden="true"> ↻</span></button>
+      <button class="mp-quality-btn" data-quality-btn type="button" aria-label="切换音质"><span data-quality-label>标准</span><span aria-hidden="true"> ↗</span></button>
+    </div>
+    <label class="mp-playlist-label" for="home-playlist">网易云歌单 ID</label>
+    <input id="home-playlist" class="mp-playlist-input" data-playlist-input type="text" inputmode="numeric" placeholder="输入歌单 ID，回车切换" autocomplete="off" aria-label="网易云歌单 ID" />
+    <div class="mp-meta" aria-live="polite">
+      <div class="mp-title" data-title>正在寻找今天的声音…</div>
+      <div class="mp-artist" data-artist>—</div>
+    </div>
+    <div class="mp-controls">
+      <button class="mp-btn" data-prev type="button" aria-label="上一首">⏮</button>
+      <button class="mp-btn mp-btn-play" data-play type="button" aria-label="播放/暂停"><span data-play-icon>▶</span></button>
+      <button class="mp-btn" data-next type="button" aria-label="下一首">⏭</button>
+    </div>
   </div>
-  <div class="mp-cover">
-    <img data-cover alt="" loading="lazy" />
+  <div class="mp-disc" aria-label="当前歌曲封面与播放动效">
+    <svg class="mp-spectrum" viewBox="0 0 240 240" aria-hidden="true">
+      {bars.map(({ angle }) => <line data-spectrum-bar x1="120" y1="33" x2="120" y2="28" transform={'rotate(' + angle + ' 120 120)'} />)}
+    </svg>
+    <div class="mp-cover"><img data-cover src="/avatar.png" alt="音乐封面" decoding="async" /><span class="mp-disc-center" aria-hidden="true"></span></div>
   </div>
-
-  <div class="mp-meta">
-    <div class="mp-title" data-title>加载中…</div>
-    <div class="mp-artist" data-artist>—</div>
+  <div class="mp-bottom">
+    <div class="mp-progress">
+      <span class="mp-time" data-ctime>0:00</span>
+      <input class="mp-range" data-seek type="range" min="0" max="1000" value="0" step="1" aria-label="播放进度" />
+      <span class="mp-time" data-dur>0:00</span>
+    </div>
+    <div class="mp-volume"><span data-vol-icon aria-hidden="true">♪</span><input class="mp-range" data-volume type="range" min="0" max="100" value="70" aria-label="音量" /></div>
   </div>
-
-  <div class="mp-progress">
-    <span class="mp-time" data-ctime>0:00</span>
-    <input
-      class="mp-range"
-      data-seek
-      type="range"
-      min="0"
-      max="1000"
-      value="0"
-      step="1"
-    />
-    <span class="mp-time" data-dur>0:00</span>
-  </div>
-
-  <div class="mp-controls">
-    <button class="mp-btn" data-prev type="button" aria-label="上一首">⏮</button>
-    <button class="mp-btn mp-btn-play" data-play type="button" aria-label="播放/暂停">
-      <span data-play-icon>▶</span>
-    </button>
-    <button class="mp-btn" data-next type="button" aria-label="下一首">⏭</button>
-  </div>
-
-  <div class="mp-volume">
-    <span class="mp-vol-icon" data-vol-icon>♪</span>
-    <input
-      class="mp-range"
-      data-volume
-      type="range"
-      min="0"
-      max="100"
-      value="70"
-      step="1"
-    />
-  </div>
-
-  <div class="mp-error" data-error hidden></div>
+  <div class="mp-error" data-error hidden role="status"></div>
 </div>
 
 <style>
-
-  .music-player {
-    position: relative;
-    width: 100%;
-    padding: 12px 14px;
-
-    background: transparent;
-
-    backdrop-filter: blur(20px) saturate(1.4);
-    -webkit-backdrop-filter: blur(20px) saturate(1.4);
-
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    border-radius: 14px;
-
-    color: rgba(255, 255, 255, 0.85);
-  }
-
-  .mp-tabs {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-
-  /* 三个控件严格各占 1/3 */
-  .mp-tabs > button,
-  .mp-tabs > .mp-playlist-input {
-    flex: 1 1 0;
-    width: 0;
-    min-width: 0;
-
-    box-sizing: border-box;
-    height: 38px;
-    padding: 6px 10px;
-
-    font-size: 12px;
-    font-family: inherit;
-    text-align: center;
-
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-
-    /* —— 毛玻璃核心 —— */
-    background: rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(12px) saturate(1.6);
-    -webkit-backdrop-filter: blur(12px) saturate(1.6);
-
-    /* 顶部高光，增强玻璃感（可选） */
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.25),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.05),
-      0 2px 8px rgba(0, 0, 0, 0.12);
-    color: rgba(255, 255, 255, 0.7);
-
-    outline: none;
-
-    transition:
-      border-color 0.15s,
-      background 0.15s,
-      color 0.15s;
-  }
-
-  .mp-tabs > button {
-    cursor: pointer;
-  }
-
-  .mp-tabs > button:hover,
-  .mp-tabs > .mp-playlist-input:hover,
-  .mp-tabs > .mp-playlist-input:focus {
-    border-color: rgba(255, 255, 255, 0.3);
-    color: #fff;
-    background: rgba(255, 255, 255, 0.06);
-  }
-
-  .mp-playlist-input::placeholder {
-    color: rgba(255, 255, 255, 0.55);
-    opacity: 1;
-  }
-
-  .mp-cover {
-    width: 150px;
-    height: 100px;
-    aspect-ratio: auto;
-    margin: 0 auto 8px;
-    border-radius: 8px;
-    overflow: hidden;
-    background: rgba(255, 255, 255, 0.04);
-  }
-  .mp-cover img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  .mp-meta {
-    margin-bottom: 10px;
-    min-width: 0;
-  }
-  .mp-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #fff;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .mp-artist {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.55);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-top: 2px;
-  }
-
-  .mp-progress {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.5);
-  }
-  .mp-range {
-    flex: 1;
-    appearance: none;
-    height: 4px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.15);
-    outline: none;
-    cursor: pointer;
-  }
-  .mp-range::-webkit-slider-thumb {
-    appearance: none;
-
-    width: 10px;
-    height: 10px;
-
-    border-radius: 50%;
-
-    background: rgba(255, 255, 255, 0.10);
-    border: 1px solid rgba(255, 255, 255, 0.28);
-
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.35),
-      0 2px 8px rgba(0, 0, 0, 0.16);
-
-    cursor: pointer;
-  }
-
-  .mp-range::-moz-range-thumb {
-    width: 10px;
-    height: 10px;
-
-    border-radius: 50%;
-
-    background: rgba(255, 255, 255, 0.10);
-    border: 1px solid rgba(255, 255, 255, 0.28);
-
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.35),
-      0 2px 8px rgba(0, 0, 0, 0.16);
-
-    cursor: pointer;
-  }
-
-  .mp-controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    margin-top: 12px;
-  }
-.mp-btn {
-  width: 32px;
-  height: 32px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(255, 255, 255, 0.72);
-
-  font-size: 12px;
-  cursor: pointer;
-
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease,
-    transform 0.15s ease;
-}
-
-.mp-btn:hover {
-  border-color: rgba(255, 255, 255, 0.30);
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
-}
-
-.mp-btn:active {
-  transform: scale(0.96);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-/* 播放鍵不要再用亮藍色 */
-.mp-btn-play {
-  width: 38px;
-  height: 38px;
-
-  border-radius: 10px;
-
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
-
-  color: #fff;
-  font-size: 14px;
-}
-
-.mp-btn-play:hover {
-  border-color: rgba(255, 255, 255, 0.32);
-  background: rgba(255, 255, 255, 0.10);
-}
-
-  .mp-volume {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 12px;
-  }
-  .mp-vol-icon {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.5);
-  }
-
-  .mp-error {
-    margin-top: 10px;
-    padding: 8px 10px;
-    font-size: 12px;
-    border-radius: 8px;
-    background: rgba(255, 80, 80, 0.12);
-    color: rgba(255, 160, 160, 0.9);
-    border: 1px solid rgba(255, 80, 80, 0.2);
-  }
+  .music-player { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: .5rem .25rem; width: 100%; padding: 1.15rem 1rem; border: 1px solid #ffffff20; border-radius: 1.25rem; background: linear-gradient(135deg, #ffffff08, #ffffff02); backdrop-filter: blur(20px); color: #e4e4e7; }
+  .mp-left { min-width: 0; padding-left: .25rem; }
+  .mp-kicker { font-size: .58rem; letter-spacing: .15em; text-transform: uppercase; color: #a1a1aa; margin: 0 0 .85rem; }
+  .mp-tabs { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .mp-tabs button { padding: .4rem .65rem; font-size: .7rem; border: 1px solid #ffffff25; border-radius: 2rem; background: #ffffff06; color: #e4e4e7; cursor: pointer; min-height: 34px; }
+  .mp-tabs button:hover { border-color: #ffffff70; background: #ffffff10; }
+  .mp-playlist-label { display: block; margin: .9rem 0 .35rem; font-size: .62rem; color: #a1a1aa; letter-spacing: .03em; }
+  .mp-playlist-input { display: block; width: 100%; min-width: 0; font: inherit; font-size: .72rem; border: 0; border-bottom: 1px solid #ffffff35; border-radius: 0; padding: .45rem 0; background: transparent; color: #f4f4f5; outline-offset: 4px; }
+  .mp-playlist-input:focus { border-bottom-color: #ffffffa0; }
+  .mp-playlist-input::placeholder { color: #71717a; font-size: .65rem; }
+  .mp-meta { margin-top: 1rem; min-height: 2.6rem; }
+  .mp-title { font-size: .85rem; font-weight: 500; line-height: 1.5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mp-artist { margin-top: .25rem; font-size: .7rem; color: #a1a1aa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mp-controls { display: flex; align-items: center; gap: .6rem; margin-top: .7rem; }
+  .mp-btn { display: inline-grid; place-items: center; height: 36px; width: 36px; flex-shrink: 0; border: none; border-radius: 50%; color: #d4d4d8; background: transparent; cursor: pointer; font-size: .85rem; }
+  .mp-btn:hover { background: #ffffff12; color: white; }
+  .mp-btn-play { border: 1px solid #ffffff55; width: 42px; height: 42px; background: #ffffff08; }
+  .mp-disc { position: relative; width: 100%; aspect-ratio: 1; }
+  .mp-spectrum { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .mp-spectrum line { stroke: rgba(255, 255, 255, .68); stroke-width: 8; stroke-linecap: round; }
+  .mp-cover { position: absolute; inset: 17%; border-radius: 50%; overflow: hidden; background: radial-gradient(circle, #27272a, #09090b); box-shadow: 0 0 0 1px #ffffff25, 0 8px 32px #0005; animation: record-spin 28s linear infinite; animation-play-state: paused; }
+  .mp-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .mp-disc-center { position: absolute; inset: calc(50% - 5px); width: 10px; height: 10px; border-radius: 50%; border: 2px solid #ffffff75; background: #18181b; box-shadow: 0 0 0 5px #ffffff16; }
+  .is-playing .mp-cover { animation-play-state: running; }
+  .mp-bottom { grid-column: 1 / -1; display: flex; align-items: center; gap: 1rem; margin-top: .6rem; }
+  .mp-progress { display: flex; align-items: center; gap: .5rem; flex: 1; min-width: 0; }
+  .mp-time { font-size: .6rem; font-variant-numeric: tabular-nums; color: #a1a1aa; }
+  .mp-range { min-width: 0; width: 100%; height: 3px; accent-color: #e4e4e7; cursor: pointer; }
+  .mp-volume { display: flex; align-items: center; gap: .4rem; width: 4rem; color: #a1a1aa; font-size: .75rem; }
+  .mp-error { grid-column: 1 / -1; color: #fecaca; font-size: .75rem; line-height: 1.6; margin-top: .5rem; }
+  .mp-error[hidden] { display: none; }
+  @keyframes record-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .mp-cover { animation: none; } }
+  @media (max-width: 380px) { .music-player { padding: .85rem .6rem; } .mp-bottom { gap: .5rem; } .mp-volume { width: 3rem; } .mp-kicker { letter-spacing: .08em; } }
 </style>
 
 <script>
@@ -350,6 +87,7 @@ const {
   } from '../lib/meting';
 
   import { load, save } from '../lib/storage';
+  import { bindMusicVisualizer, unlockMusicVisualizer } from '../lib/audio-spectrum';
 
   const fmt = (t) => {
     if (!isFinite(t) || t < 0) t = 0;
@@ -367,6 +105,7 @@ const {
 
   const createGlobalPlayer = () => {
     const audio = new Audio();
+    audio.crossOrigin = 'anonymous';
 
     audio.preload = 'metadata';
     audio.volume = load('music.volume', 0.7);
@@ -439,7 +178,7 @@ const {
       if (!track) {
         ui.titleEl.textContent = '暂无曲目';
         ui.artistEl.textContent = '—';
-        ui.coverEl.removeAttribute('src');
+        ui.coverEl.src = '/avatar.png';
         return;
       }
 
@@ -451,6 +190,7 @@ const {
 
       if (track.pic) {
         ui.coverEl.src = track.pic;
+        ui.coverEl.alt = `${track.name || '当前歌曲'} · 封面`;
       } else {
         ui.coverEl.removeAttribute('src');
       }
@@ -490,6 +230,8 @@ const {
       const ui = player.ui;
 
       if (!ui) return;
+
+      player.root?.classList.toggle('is-playing', !audio.paused);
 
       ui.playIcon.textContent =
         audio.paused ? '▶' : '⏸';
@@ -1011,6 +753,8 @@ const {
      */
     player.root = root;
     player.ui = ui;
+    player.visualizerCleanup?.();
+    player.visualizerCleanup = bindMusicVisualizer(root, player.audio);
 
     /* -------------------------
        播放 / 暂停
@@ -1019,6 +763,7 @@ const {
     ui.playBtn?.addEventListener(
       'click',
       () => {
+        unlockMusicVisualizer(player.audio);
         if (player.audio.paused) {
           player.audio
             .play()
@@ -1123,6 +868,7 @@ const {
           id,
           {}
         );
+        if (player.playlistId === id) save('music.customPlaylist', true);
       }
     );
 
@@ -1217,10 +963,14 @@ const {
      * 因此不会重新 fetch，也不会换歌。
      */
     if (!player.playlistLoaded) {
+      const configuredPlaylistId = root.dataset.playlistId || DEFAULT_PLAYLIST_ID;
+      const savedDefault = load('music.defaultPlaylistId', '');
+      const previousDefault = !load('music.customPlaylist', false) && (
+        player.playlistId === savedDefault || ['12309959984', '18401889368'].includes(player.playlistId)
+      );
       const initialPlaylistId =
-        player.playlistId ||
-        root.dataset.playlistId ||
-        DEFAULT_PLAYLIST_ID;
+        (previousDefault ? configuredPlaylistId : player.playlistId) || configuredPlaylistId;
+      save('music.defaultPlaylistId', configuredPlaylistId);
 
       player.playlistId =
         initialPlaylistId;
@@ -1240,6 +990,12 @@ const {
   /* =========================================================
      Astro 页面导航
      ========================================================= */
+
+  document.addEventListener('astro:before-swap', () => {
+    const player = window.__homeMusicPlayer;
+    player?.visualizerCleanup?.();
+    if (player) { player.ui = null; player.root = null; }
+  });
 
   const bootMusicPlayer = () => {
     bindPlayerUI().catch((err) => {

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <title>写作后台 · Eclipsar</title>
+    <style>
+      body { margin: 0; color: #e4e4e7; background: #101012; font-family: system-ui, sans-serif; }
+      #admin-status { box-sizing: border-box; max-width: 36rem; margin: 15vh auto; padding: 2rem; line-height: 1.85; }
+      #admin-status h1 { font-size: 1.8rem; font-weight: 600; }
+      #admin-status p { color: #a1a1aa; }
+      #admin-status a { color: #fafafa; }
+      #admin-status button { margin: 1rem 0; padding: .8rem 1.2rem; border: 1px solid #ffffff40; border-radius: .5rem; background: transparent; color: white; cursor: pointer; }
+      #admin-status[hidden] { display: none; }
+    </style>
+    <script>window.CMS_MANUAL_INIT = true;</script>
+  </head>
+  <body>
+    <main id="admin-status" role="status">
+      <h1>写作后台</h1>
+      <p id="admin-message">正在加载编辑器…</p>
+      <p><a href="/">← 返回网站</a></p>
+    </main>
+    <script type="module" src="/admin/admin.js"></script>
+  </body>
+</html>

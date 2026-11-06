@@ -14,7 +14,7 @@ type CustomPage = {
 	modules: readonly PageModule[];
 };
 
-const fixedPaths = new Set(['about', 'blog', 'contact', 'graph', 'projects', 'resume']);
+const fixedPaths = new Set(['about', 'blog', 'contact', 'graph', 'projects', 'resume', 'moments', 'admin']);
 const normalizeCustomPath = (page: CustomPage) => (page.path ?? page.slug ?? '').replace(/^\/+|\/+$/g, '');
 
 export function getStaticPaths() {

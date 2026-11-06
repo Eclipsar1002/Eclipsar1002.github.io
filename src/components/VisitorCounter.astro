@@ -1,0 +1,51 @@
+<!-- Busuanzi counts real page views for this site's domain. No fabricated fallback number. -->
+<div hidden aria-hidden="true">
+  <span id="busuanzi_container_site_pv"><span id="busuanzi_value_site_pv"></span></span>
+</div>
+
+<script>
+  let lastPage = '';
+  let observer: MutationObserver | undefined;
+  let pendingScript: HTMLScriptElement | undefined;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  let lastCount = '';
+
+  function showCount(count: string) {
+    const el = document.querySelector<HTMLElement>('[data-visitor-count]');
+    if (el) el.textContent = (el.dataset.template || '访客编号 #{count}').replace('{count}', count);
+  }
+  function updateCounter() {
+    const page = location.pathname;
+    if (page === lastPage) { if (lastCount) showCount(lastCount); return; }
+    lastPage = page;
+    observer?.disconnect();
+    pendingScript?.remove();
+    clearTimeout(timeout);
+    const value = document.getElementById('busuanzi_value_site_pv');
+    if (!value) return;
+    value.textContent = '';
+    observer = new MutationObserver(() => {
+      const count = value.textContent?.trim() || '';
+      if (!/^\d+$/.test(count)) return;
+      lastCount = count;
+      showCount(count);
+      clearTimeout(timeout);
+      observer?.disconnect();
+    });
+    observer.observe(value, { childList: true, characterData: true, subtree: true });
+    pendingScript = document.createElement('script');
+    pendingScript.src = 'https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js';
+    pendingScript.async = true;
+    pendingScript.referrerPolicy = 'no-referrer-when-downgrade';
+    const unavailable = () => {
+      if (lastCount) { showCount(lastCount); return; }
+      const el = document.querySelector<HTMLElement>('[data-visitor-count]');
+      if (el) el.textContent = '欢迎来到互联网的小角落 · 访问统计暂不可用';
+    };
+    pendingScript.onerror = unavailable;
+    timeout = setTimeout(unavailable, 12000);
+    document.head.append(pendingScript);
+  }
+  updateCounter();
+  document.addEventListener('astro:page-load', updateCounter);
+</script>

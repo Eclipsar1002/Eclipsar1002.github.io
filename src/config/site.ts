@@ -1,3 +1,5 @@
+import appearance from './appearance.json';
+
 export const defaultLocale = "zh";
 
 export const locales = {
@@ -16,15 +18,16 @@ const shared = {
 	email: "fxy2004@mail.ustc.edu.cn",
 	emailIcon: "@",
 	avatar: "/avatar.png",
-	visitorCount: "0001",
+	visitorCount: "…",
 	background: {
-		image: "/demo.png",
-		blur: "0px",
-		opacity: 0.6,
+		image: appearance.backgroundImage,
+		blur: `${appearance.backgroundBlur}px`,
+		opacity: 1,
+		brightness: appearance.brightness,
 		scale: 1,
 		overlay: "radial-gradient(circle at top left, rgba(255,255,255,0.12), transparent 30%), linear-gradient(180deg, rgba(5,5,5,0.55) 0%, rgba(0,0,0,0.65) 55%, rgba(9,9,9,0.95) 100%)",
 		rain: {
-			enabled: false,
+			enabled: appearance.rainEnabled,
 			mode: "falling",
 			density: 0.7,
 			speed: 1,
@@ -37,7 +40,6 @@ const shared = {
 	socials: [
 		{ label: "GitHub", href: "https://github.com/Eclipsar1002", icon: "GH" },
 		{ label: "B站", href: "https://space.bilibili.com/3546624236194104", icon: "B" },
-		{ label: "Folo", href: "https://folo.is", icon: "F" },
 	],
 };
 
@@ -52,14 +54,14 @@ const siteConfigs = {
 			{ label: "项目", href: "/projects" },
 			{ label: "博客", href: "/blog" },
 			{ label: "图谱", href: "/graph" },
-			{ label: "简历", href: "/resume" },
+			{ label: "动态", href: "/moments/" },
 			{ label: "联系", href: "/contact" },
 		],
 		quickLinks: [
 			{ label: "博客", href: "/blog", icon: "书" },
 			{ label: "项目", href: "/projects", icon: "作" },
 			{ label: "关于", href: "/about", icon: "我" },
-			{ label: "简历", href: "/resume", icon: "历" },
+			{ label: "动态", href: "/moments/", icon: "记" },
 			{ label: "联系", href: "/contact", icon: "@" },
 		],
 		today: {
@@ -72,9 +74,9 @@ const siteConfigs = {
 			dateLocale: "zh-CN",
 			greetings: ["凌晨好", "早上好", "上午好", "中午好", "下午好", "晚上好"],
 		},
-  		music: {
-    		playlistId: "12309959984",   // 纯数字
-  		},
+		music: {
+			playlistId: appearance.playlistId,
+		},
 
 		ui: {
 			headerCta: "打个招呼",
@@ -105,6 +107,7 @@ const siteConfigs = {
 						{ label: "学习记录", href: "/blog" },
 						{ label: "项目存档", href: "/projects" },
 						{ label: "个人迷思", href: "/about" },
+						{ label: "个人动态", href: "/moments/" },
 						{ label: "联系方式", href: "/contact" },
 					] } },
 					{
@@ -157,7 +160,7 @@ const siteConfigs = {
 								{ label: "学习记录", description: "记录课程、阅读、实验和阶段性复盘。" },
 								{ label: "项目作品", description: "展示课程作业、开源项目和个人练手。" },
 								{ label: "博客笔记", description: "用 Markdown 把想法留下来，支持标签和双链。" },
-								{ label: "简历经历", description: "教育背景、技能、项目经验和可下载的 PDF 简历。" },
+								{ label: "个人动态", description: "照片、日常碎片，还有偶尔想说的话。", href: "/moments/" },
 							],
 						},
 					},
@@ -248,7 +251,7 @@ const siteConfigs = {
 						props: {
 							kicker: "Contact",
 							heading: "关于项目、写作或个人网站的想法，欢迎来信。",
-							intro: "把你的 Email、GitHub、Bilibili、Folo、Telegram 或其他公开链接放在这里。",
+							intro: "可以通过 Email、GitHub 或 Bilibili 找到我。",
 						},
 					},
 					{ type: "contactPanel" },

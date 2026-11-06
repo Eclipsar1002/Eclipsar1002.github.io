@@ -1,0 +1,13 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MomentsFeed from '../components/MomentsFeed.astro';
+---
+
+<Layout title="个人动态" description="照片、日常碎片，还有偶尔想说的话。">
+  <section class="mx-auto max-w-3xl px-5 py-16 md:py-24">
+    <p class="text-xs uppercase tracking-[.3em] text-zinc-500">Life, in little pieces</p>
+    <h1 class="mt-4 text-4xl font-semibold tracking-tight text-white md:text-5xl">个人动态</h1>
+    <p class="mt-5 mb-14 text-base leading-7 text-zinc-400">照片、日常碎片，还有偶尔想说的话。</p>
+    <MomentsFeed />
+  </section>
+</Layout>

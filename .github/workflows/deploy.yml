@@ -36,6 +36,9 @@ jobs:
         env:
           ATLAS_DYNAMIC: 'false'
 
+      - name: Check CMS authentication
+        run: node --test services/cms-auth/worker.test.mjs
+
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:

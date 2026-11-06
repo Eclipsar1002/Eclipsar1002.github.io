@@ -6,8 +6,8 @@ const blog = defineCollection({
 	schema: z.object({
 		title: z.string().default(''),
 		description: z.string().default(''),
-		pubDate: z.date().default(new Date('1970-01-01')),
-		updatedDate: z.date().optional(),
+		pubDate: z.coerce.date().default(new Date('1970-01-01')),
+		updatedDate: z.coerce.date().optional(),
 		tags: z.array(z.string()).default([]),
 		cover: z.string().optional(),
 		draft: z.boolean().default(false),
@@ -29,4 +29,15 @@ const projects = defineCollection({
 	}),
 });
 
-export const collections = { blog, projects };
+const moments = defineCollection({
+	loader: glob({ pattern: '**/*.md', base: './src/content/moments' }),
+	schema: z.object({
+		title: z.string().default(''),
+		pubDate: z.coerce.date(),
+		images: z.array(z.object({ src: z.string(), alt: z.string().default('') })).default([]),
+		tags: z.array(z.string()).default([]),
+		draft: z.boolean().default(false),
+	}),
+});
+
+export const collections = { blog, projects, moments };

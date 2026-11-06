@@ -1,0 +1,79 @@
+backend:
+  name: github
+  repo: Eclipsar1002/Eclipsar1002.github.io
+  branch: main
+  auth_endpoint: auth
+
+site_url: https://eclipsar1002.github.io
+display_url: https://eclipsar1002.github.io
+locale: zh_Hans
+media_folder: public/uploads
+public_folder: /uploads
+slug:
+  encoding: unicode
+  clean_accents: true
+
+collections:
+  - name: blog
+    label: 文章
+    label_singular: 文章
+    folder: src/content/blog
+    create: true
+    extension: md
+    format: yaml-frontmatter
+    slug: '{{year}}-{{month}}-{{day}}-{{slug}}'
+    nested:
+      depth: 10
+    summary: '{{title}} · {{pubDate}}'
+    sortable_fields: [pubDate, title]
+    view_groups:
+      - label: 标签
+        field: tags
+    fields:
+      - { label: 标题, name: title, widget: string }
+      - { label: 摘要, name: description, widget: text, required: false }
+      - { label: 发布时间, name: pubDate, widget: datetime, date_format: YYYY-MM-DD, time_format: 'HH:mm', format: 'YYYY-MM-DDTHH:mm:ssZ' }
+      - { label: 最后修改时间, name: updatedDate, widget: datetime, required: false, format: 'YYYY-MM-DDTHH:mm:ssZ' }
+      - { label: 标签, name: tags, widget: list, default: [], required: false }
+      - { label: 封面, name: cover, widget: image, required: false, allow_multiple: false }
+      - { label: 正文, name: body, widget: markdown, required: false, hint: '支持 Markdown。公式和双链在发布后由网站渲染。保存发布的内容会进入公开仓库。' }
+
+  - name: moments
+    label: 个人动态
+    label_singular: 动态
+    folder: src/content/moments
+    create: true
+    extension: md
+    format: yaml-frontmatter
+    identifier_field: pubDate
+    slug: '{{slug}}'
+    summary: '{{pubDate}} · {{title}}'
+    sortable_fields: [pubDate]
+    fields:
+      - { label: 发布时间, name: pubDate, widget: datetime, format: 'YYYY-MM-DDTHH:mm:ssZ', date_format: YYYY-MM-DD, time_format: 'HH:mm' }
+      - { label: 标题（可不填）, name: title, widget: string, required: false }
+      - { label: 碎碎念, name: body, widget: markdown, required: false }
+      - name: images
+        label: 照片
+        widget: list
+        required: false
+        default: []
+        summary: '{{fields.alt}}'
+        fields:
+          - { label: 图片, name: src, widget: image, allow_multiple: false }
+          - { label: 图片说明, name: alt, widget: string, required: false }
+      - { label: 标签, name: tags, widget: list, required: false, default: [] }
+
+  - name: settings
+    label: 网站设置
+    files:
+      - name: appearance
+        label: 背景与音乐
+        file: src/config/appearance.json
+        format: json
+        fields:
+          - { label: 背景图片, name: backgroundImage, widget: image, allow_multiple: false }
+          - { label: 背景亮度, name: brightness, widget: number, value_type: float, min: 0.1, max: 1, step: 0.05, hint: '0.1 最暗，1 最亮。发布后成为所有访客的默认值。' }
+          - { label: 背景模糊（像素）, name: backgroundBlur, widget: number, value_type: int, min: 0, max: 30, step: 1 }
+          - { label: 背景雨滴, name: rainEnabled, widget: boolean, default: false }
+          - { label: 默认网易云歌单 ID, name: playlistId, widget: string, pattern: ['^\d+$', '请输入纯数字歌单 ID'] }

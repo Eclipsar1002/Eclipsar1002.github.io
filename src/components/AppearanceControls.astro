@@ -1,0 +1,106 @@
+<details class="appearance-controls" data-appearance-controls>
+  <summary aria-label="调整网站背景和明暗">◐ <span>外观</span></summary>
+  <div class="appearance-panel">
+    <p class="appearance-title">留一个舒服的亮度</p>
+    <label for="background-brightness">背景明暗 <output data-brightness-value></output></label>
+    <input id="background-brightness" data-brightness type="range" min="10" max="100" step="1" />
+    <label for="background-image">背景图片地址</label>
+    <input id="background-image" data-background-url type="url" placeholder="https://… 或 /uploads/…" />
+    <div class="appearance-actions">
+      <button type="button" data-apply-background>应用图片</button>
+      <button type="button" data-reset-background>恢复默认</button>
+    </div>
+    <p data-appearance-message role="status">仅保存在当前浏览器。全站默认背景可在写作后台修改。</p>
+    <a href="/admin/" data-astro-reload>进入写作后台 ↗</a>
+  </div>
+</details>
+
+<script>
+  import { load, save } from '../lib/storage';
+
+  function mountAppearance() {
+    const controls = document.querySelector<HTMLElement>('[data-appearance-controls]');
+    const background = document.querySelector<HTMLElement>('[data-site-background]');
+    if (!controls || !background || controls.dataset.bound) return;
+    controls.dataset.bound = 'true';
+    const brightness = controls.querySelector<HTMLInputElement>('[data-brightness]')!;
+    const urlInput = controls.querySelector<HTMLInputElement>('[data-background-url]')!;
+    const output = controls.querySelector<HTMLOutputElement>('[data-brightness-value]')!;
+    const message = controls.querySelector<HTMLElement>('[data-appearance-message]')!;
+    const defaults = {
+      image: background.dataset.defaultImage || '',
+      brightness: Number(background.dataset.defaultBrightness || .65),
+    };
+    const safeImage = (value: unknown): string => {
+      if (typeof value !== 'string' || !value.trim()) return '';
+      try {
+        const url = new URL(value, location.origin);
+        return url.protocol === 'https:' || (url.protocol === 'http:' && url.origin === location.origin) ? url.href : '';
+      } catch { return ''; }
+    };
+    const saved = load<{ image?: string; brightness?: number } | null>('site.appearance', null);
+    let state = {
+      image: safeImage(saved?.image) || safeImage(defaults.image),
+      brightness: Math.max(.1, Math.min(1, Number.isFinite(saved?.brightness) ? saved!.brightness! : defaults.brightness)),
+    };
+    function apply(persist = true) {
+      background!.style.backgroundImage = `url(${JSON.stringify(state.image)})`;
+      background!.style.filter = `blur(${background!.dataset.defaultBlur || '0px'}) brightness(${state.brightness})`;
+      const rain = document.querySelector<HTMLElement>('[data-rain-effect]');
+      if (rain) {
+        rain.style.filter = `blur(${background!.dataset.defaultBlur || '0px'}) brightness(${state.brightness})`;
+        if (safeImage(rain.dataset.backgroundImage) !== state.image) {
+          rain.dataset.backgroundImage = state.image;
+          document.dispatchEvent(new Event('atlas:background-change'));
+        }
+      }
+      brightness.value = String(Math.round(state.brightness * 100));
+      output.value = `${brightness.value}%`;
+      if (persist) save('site.appearance', state);
+    }
+    urlInput.value = saved?.image || defaults.image;
+    apply(false);
+    brightness.addEventListener('input', () => {
+      state.brightness = Number(brightness.value) / 100;
+      apply();
+    });
+    controls.querySelector('[data-apply-background]')!.addEventListener('click', async () => {
+      const image = safeImage(urlInput.value);
+      if (!image) { message.textContent = '请输入 HTTPS 图片地址，或以 / 开头的站内图片路径。'; return; }
+      const preview = new Image();
+      preview.src = image;
+      try {
+        await preview.decode();
+        state.image = image;
+        apply();
+        message.textContent = '背景已应用，并保存在当前浏览器。';
+      } catch { message.textContent = '图片无法加载，请检查链接。'; }
+    });
+    controls.querySelector('[data-reset-background]')!.addEventListener('click', () => {
+      save('site.appearance', null);
+      state = { image: safeImage(defaults.image), brightness: defaults.brightness };
+      urlInput.value = defaults.image;
+      apply(false);
+      message.textContent = '已恢复网站默认背景和明暗。';
+    });
+  }
+  mountAppearance();
+  document.addEventListener('astro:page-load', mountAppearance);
+</script>
+
+<style>
+  .appearance-controls { position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: 60; font-size: .8rem; }
+  summary { list-style: none; display: flex; gap: .4rem; align-items: center; justify-content: center; min-height: 44px; padding: .65rem 1rem; border: 1px solid #ffffff30; border-radius: 2rem; background: #18181bd9; color: #e4e4e7; cursor: pointer; backdrop-filter: blur(20px); }
+  summary::-webkit-details-marker { display: none; }
+  summary:hover { border-color: #ffffff70; }
+  .appearance-panel { position: absolute; bottom: 3.5rem; right: 0; width: min(20rem, calc(100vw - 2.5rem)); padding: 1.25rem; border: 1px solid #ffffff25; border-radius: 1rem; background: #151517f5; backdrop-filter: blur(24px); box-shadow: 0 20px 60px #0008; }
+  .appearance-title { color: #fafafa; font-size: 1rem; margin-bottom: 1.25rem; }
+  label { display: flex; justify-content: space-between; color: #d4d4d8; margin-top: 1rem; margin-bottom: .65rem; }
+  input { width: 100%; accent-color: white; }
+  input[type=url] { border: 1px solid #ffffff25; padding: .65rem; border-radius: .5rem; background: #ffffff08; color: white; font-size: .8rem; }
+  .appearance-actions { display: flex; gap: .6rem; margin-top: .75rem; }
+  button { padding: .55rem .7rem; border: 1px solid #ffffff30; border-radius: .5rem; cursor: pointer; color: #e4e4e7; }
+  button:hover { background: #ffffff12; }
+  p[data-appearance-message] { line-height: 1.7; margin-top: 1rem; color: #a1a1aa; font-size: .75rem; }
+  a { display: inline-block; color: #d4d4d8; margin-top: 1rem; }
+</style>

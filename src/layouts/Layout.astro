@@ -5,6 +5,8 @@ import { ClientRouter } from 'astro:transitions';
 import { getLocaleFromUrl, getSiteConfig, locales, localizePath } from '../config/site';
 import '../styles/global.css';
 import RainEffect from '../components/RainEffect.astro';
+import AppearanceControls from '../components/AppearanceControls.astro';
+import VisitorCounter from '../components/VisitorCounter.astro';
 interface Props {
 	title?: string;
 	description?: string;
@@ -19,11 +21,10 @@ const currentPath = (Astro.url.pathname.replace(/^\/en(?=\/|$)/, '') || '/').rep
 const background = siteConfig.background;
 const backgroundImageStyle = [
 	`background-image: url("${background.image}")`,
-	`filter: blur(${background.blur})`,
+	`filter: blur(${background.blur}) brightness(${background.brightness})`,
 	`opacity: ${background.opacity}`,
 	`transform: scale(${background.scale})`,
 ].join('; ');
-const backgroundOverlayStyle = `background: ${background.overlay}`;
 ---
 
 <!doctype html>
@@ -45,18 +46,20 @@ const backgroundOverlayStyle = `background: ${background.overlay}`;
 	</head>
 	<body class="min-h-screen bg-black text-white antialiased">
 		<div class="pointer-events-none fixed inset-0 z-0 overflow-hidden" transition:persist="site-background">
-			<div class="absolute inset-0 bg-cover bg-center bg-no-repeat" style={backgroundImageStyle}></div>
+			<div data-site-background data-default-image={background.image} data-default-brightness={background.brightness} data-default-blur={background.blur} class="absolute inset-0 bg-cover bg-center bg-no-repeat" style={backgroundImageStyle}></div>
 
 
 			<RainEffect />
 		</div>
 		<Header />
+		<AppearanceControls />
 		<main class="relative z-10" transition:name="page-content" transition:animate="slide">
 			<slot />
 		</main>
 		<div class="relative z-10">
 			<Footer />
 		</div>
+		<VisitorCounter />
 	</body>
 </html>
 

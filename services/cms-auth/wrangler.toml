@@ -1,0 +1,10 @@
+name = "eclipsar-cms-auth"
+main = "worker.mjs"
+compatibility_date = "2026-10-27"
+workers_dev = true
+
+[vars]
+SITE_ORIGIN = "https://eclipsar1002.github.io"
+GITHUB_USER = "Eclipsar1002"
+
+# Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET with Cloudflare encrypted secrets.

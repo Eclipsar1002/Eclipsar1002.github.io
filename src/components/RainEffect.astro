@@ -14,7 +14,9 @@ const dimOverlay = siteConfig.background.overlay;
 	id="rain-effect"
 	class="rain-effect"
 	data-rain-effect
+	data-rain-enabled={siteConfig.background.rain.enabled || undefined}
 	data-background-image={backgroundImage}
+	style={`filter: blur(${siteConfig.background.blur}) brightness(${siteConfig.background.brightness})`}
 >
 	<canvas class="rain-canvas" data-rain-canvas></canvas>
 
@@ -57,6 +59,7 @@ const dimOverlay = siteConfig.background.overlay;
 	type RainState = {
 		fx?: any;
 		root?: HTMLElement;
+		generation?: object;
 		resizeHandler?: () => void;
 		visibilityHandler?: () => void;
 	};
@@ -145,7 +148,7 @@ const dimOverlay = siteConfig.background.overlay;
 			'[data-rain-canvas]'
 		);
 
-		if (!root || !canvas) {
+		if (!root || !canvas || !root.hasAttribute('data-rain-enabled')) {
 			return;
 		}
 
@@ -174,13 +177,14 @@ const dimOverlay = siteConfig.background.overlay;
 		}
 
 		// 先占位，防止 ClientRouter 快速切换时重复 boot
-		window.__rainEffectState = { root };
+		const generation = {};
+		window.__rainEffectState = { root, generation };
 
 		bootRain(canvas, backgroundImage)
 			.then((result) => {
 				const state = window.__rainEffectState;
 
-				if (!state || state.root !== root) {
+				if (!state || state.root !== root || state.generation !== generation) {
 					result?.fx.stop();
 					return;
 				}
@@ -247,4 +251,8 @@ const dimOverlay = siteConfig.background.overlay;
 	 * Astro ClientRouter 页面切换完成后重新检查。
 	 */
 	document.addEventListener('astro:page-load', mountRainEffect);
+	document.addEventListener('atlas:background-change', () => {
+		destroyRainEffect();
+		mountRainEffect();
+	});
 </script>

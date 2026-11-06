@@ -1,0 +1,77 @@
+---
+import { getCollection, render } from 'astro:content';
+
+interface Props { limit?: number }
+const { limit } = Astro.props;
+const moments = (await getCollection('moments', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const entries = await Promise.all((limit ? moments.slice(0, limit) : moments).map(async (entry) => ({
+  entry, Content: (await render(entry)).Content,
+})));
+const dateFormat = new Intl.DateTimeFormat('zh-CN', {
+  timeZone: 'Asia/Shanghai', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
+});
+---
+
+{entries.length ? (
+  <div class="moments-feed">
+    {entries.map(({ entry, Content }) => (
+      <article class="moment" id={entry.id}>
+        <div class="moment-date">
+          <span class="moment-dot" aria-hidden="true"></span>
+          <a href={`/moments/#${encodeURIComponent(entry.id)}`} aria-label="这条动态的链接">
+            <time datetime={entry.data.pubDate.toISOString()}>{dateFormat.format(entry.data.pubDate)}</time>
+          </a>
+        </div>
+        <div class="moment-card">
+          {entry.data.title && <h2>{entry.data.title}</h2>}
+          <div class="prose-content"><Content /></div>
+          {entry.data.images.length > 0 && (
+            <div class:list={['moment-images', { 'single-image': entry.data.images.length === 1 }]}>
+              {entry.data.images.map((image) => (
+                <a href={image.src} target="_blank" rel="noreferrer" aria-label={image.alt || '查看原图'}>
+                  <img src={image.src} alt={image.alt} loading="lazy" decoding="async" />
+                </a>
+              ))}
+            </div>
+          )}
+          {entry.data.tags.length > 0 && <div class="moment-tags">{entry.data.tags.map((tag) => <span>#{tag}</span>)}</div>}
+        </div>
+      </article>
+    ))}
+  </div>
+) : (
+  <div class="moments-empty">
+    <span aria-hidden="true">✳</span>
+    <p>还没有留下动态。</p>
+    <p>等一个想分享的瞬间，或者一句突然想说的话。</p>
+  </div>
+)}
+
+<style>
+  .moments-feed { padding-left: 1rem; }
+  .moment { position: relative; border-left: 1px solid #ffffff20; padding: 0 0 2.5rem 2rem; scroll-margin-top: 8rem; }
+  .moment-date { position: relative; padding-bottom: 1rem; color: #a1a1aa; font-size: .8rem; }
+  .moment-date a:hover { color: white; }
+  .moment-dot { position: absolute; left: -2.3rem; top: .3rem; height: .55rem; width: .55rem; border-radius: 50%; background: #d4d4d8; box-shadow: 0 0 0 5px #111113; }
+  .moment-card { border: 1px solid #ffffff18; border-radius: 1rem; padding: 1.5rem; background: #ffffff05; backdrop-filter: blur(14px); }
+  h2 { color: #fafafa; font-size: 1.15rem; margin-bottom: .75rem; font-weight: 600; }
+  .moment-images { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem; margin-top: 1.25rem; }
+  .moment-images a { overflow: hidden; border-radius: .65rem; background: #ffffff05; }
+  .moment-images img { width: 100%; aspect-ratio: 1; object-fit: cover; transition: transform .3s; }
+  .moment-images a:hover img { transform: scale(1.035); }
+  .single-image { grid-template-columns: minmax(0, 1fr); }
+  .single-image img { aspect-ratio: auto; max-height: 36rem; object-fit: contain; }
+  .moment-tags { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem; font-size: .8rem; color: #a1a1aa; }
+  .moments-empty { padding: 4rem 1.25rem; text-align: center; border: 1px dashed #ffffff25; border-radius: 1rem; color: #a1a1aa; }
+  .moments-empty > span { display: block; font-size: 2rem; color: #e4e4e7; margin-bottom: 1.5rem; }
+  .moments-empty p + p { margin-top: .75rem; font-size: .85rem; }
+  @media (max-width: 480px) {
+    .moments-feed { padding-left: .35rem; }
+    .moment { padding-left: 1.25rem; }
+    .moment-dot { left: -1.55rem; }
+    .moment-card { padding: 1rem; }
+    .moment-images { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .single-image { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>
