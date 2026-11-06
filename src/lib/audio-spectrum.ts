@@ -9,7 +9,7 @@ function getGraph(audio: HTMLAudioElement): AudioGraph | undefined {
     const context = new AudioContext();
     const source = context.createMediaElementSource(audio);
     const analyser = context.createAnalyser();
-    analyser.fftSize = 2048;
+    analyser.fftSize = 8192;
     analyser.minDecibels = -78;
     analyser.maxDecibels = -16;
     analyser.smoothingTimeConstant = .38;
@@ -26,46 +26,26 @@ export function unlockMusicVisualizer(audio: HTMLAudioElement): void {
   if (graph && graph.context.state !== 'running') void graph.context.resume().catch(() => {});
 }
 
+/**
+ * Adapted from JIEJOE-WEB-Tutorial/017-audio-wave (MIT).
+ * Original: 200 radial lines, mean absolute PCM amplitude per group.
+ * Here PCM is read live from the existing player rather than pre-decoding a demo file.
+ * Copyright (c) 2026 JIEJOE'S WEB Tutorial. See public/licenses/jiejoe-audio-wave.txt.
+ */
 export function bindMusicVisualizer(root: HTMLElement, audio: HTMLAudioElement): () => void {
-  const ring = root.querySelector<SVGPathElement>('[data-spectrum-ring]');
-  if (!ring) return () => {};
+  const lines = [...root.querySelectorAll<SVGLineElement>('[data-wave-line]')];
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let frame = 0;
   let disposed = false;
   let lastDraw = 0;
-  const frequencies = new Uint8Array(1024);
-  const pointCount = 96;
-  const energies = new Float32Array(pointCount);
-  const radii = new Float32Array(pointCount).fill(104);
-
-  function renderRing() {
-    const points = Array.from(radii, (radius, index) => {
-      const angle = index * Math.PI * 2 / pointCount - Math.PI / 2;
-      return { x: 140 + Math.cos(angle) * radius, y: 140 + Math.sin(angle) * radius };
-    });
-    const f = (n: number) => n.toFixed(2);
-    let path = `M ${f(points[0].x)} ${f(points[0].y)}`;
-    // A closed cubic curve keeps the entire frequency contour connected, including its seam.
-    for (let index = 0; index < pointCount; index++) {
-      const p0 = points[(index - 1 + pointCount) % pointCount];
-      const p1 = points[index];
-      const p2 = points[(index + 1) % pointCount];
-      const p3 = points[(index + 2) % pointCount];
-      const c1x = p1.x + (p2.x - p0.x) / 6;
-      const c1y = p1.y + (p2.y - p0.y) / 6;
-      const c2x = p2.x - (p3.x - p1.x) / 6;
-      const c2y = p2.y - (p3.y - p1.y) / 6;
-      path += ` C ${f(c1x)} ${f(c1y)} ${f(c2x)} ${f(c2y)} ${f(p2.x)} ${f(p2.y)}`;
-    }
-    path += ' Z M 238 140 A 98 98 0 1 0 42 140 A 98 98 0 1 0 238 140 Z';
-    ring!.setAttribute('d', path);
-  }
+  const samples = new Float32Array(8192);
+  const lengths = new Float32Array(lines.length).fill(3);
 
   function reset() {
     cancelAnimationFrame(frame);
     frame = 0;
-    radii.fill(104);
-    renderRing();
+    lengths.fill(3);
+    lines.forEach((line) => line.setAttribute('y2', '38'));
     root.classList.remove('is-playing');
   }
 
@@ -77,32 +57,21 @@ export function bindMusicVisualizer(root: HTMLElement, audio: HTMLAudioElement):
     if (now - lastDraw >= 30) {
       lastDraw = now;
       const graph = graphs.get(audio);
-      if (graph) graph.analyser.getByteFrequencyData(frequencies);
-      else frequencies.fill(0);
-      const nyquist = (graph?.context.sampleRate || 44100) / 2;
-      energies.forEach((_, index) => {
-        const lowHz = 45 * Math.pow(14000 / 45, index / pointCount);
-        const highHz = 45 * Math.pow(14000 / 45, (index + 1) / pointCount);
-        const low = Math.min(frequencies.length - 1, Math.floor(lowHz / nyquist * frequencies.length));
-        const high = Math.min(frequencies.length, Math.max(low + 1, Math.ceil(highHz / nyquist * frequencies.length)));
-        let peak = 0;
-        for (let bin = low; bin < high; bin++) peak = Math.max(peak, frequencies[bin]);
-        energies[index] = audio.muted ? 0 : Math.max(0, (peak / 255 - .16) / .7);
+      if (graph) graph.analyser.getFloatTimeDomainData(samples);
+      else samples.fill(0);
+      const pointSamples = Math.floor(samples.length / lines.length);
+      lines.forEach((line, index) => {
+        let sum = 0;
+        const start = index * pointSamples;
+        for (let offset = 0; offset < pointSamples; offset++) sum += Math.abs(samples[start + offset]);
+        const amplitude = audio.muted ? 0 : sum / pointSamples;
+        // Preserve the tutorial's PCM grouping, with extra gain for a small album-art widget.
+        const response = Math.min(1, Math.pow(Math.max(0, amplitude - .008) * 2.6, 1.25));
+        const target = 3 + response * 25 * Math.sqrt(audio.volume);
+        const smoothing = target > lengths[index] ? .82 : .32;
+        lengths[index] += (target - lengths[index]) * smoothing;
+        line.setAttribute('y2', String(41 - lengths[index]));
       });
-      radii.forEach((radius, index) => {
-        let energy = energies[index];
-        // Spread each real frequency peak across neighboring points for a rounded, solid wave.
-        for (let offset = -3; offset <= 3; offset++) {
-          const neighbor = energies[(index + offset + pointCount) % pointCount];
-          energy = Math.max(energy, neighbor * (1 - Math.abs(offset) / 4));
-        }
-        // Quiet bands stay near the disc; strong transients form deep, pronounced peaks.
-        const response = Math.min(1, Math.pow(energy, 1.65));
-        const target = 104 + response * 34 * Math.sqrt(audio.volume);
-        const smoothing = target > radius ? .88 : .25;
-        radii[index] += (target - radius) * smoothing;
-      });
-      renderRing();
     }
     frame = requestAnimationFrame(draw);
   }
@@ -132,6 +101,6 @@ export function bindMusicVisualizer(root: HTMLElement, audio: HTMLAudioElement):
     audio.removeEventListener('emptied', reset);
     document.removeEventListener('visibilitychange', start);
     reducedMotion.removeEventListener('change', start);
-    // The graph stays connected because the Audio element survives Astro navigation.
+    // Keep the existing audio graph connected during Astro page navigation.
   };
 }
