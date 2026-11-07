@@ -16,6 +16,7 @@ const dimOverlay = siteConfig.background.overlay;
 	data-rain-effect
 	data-rain-enabled
 	data-background-image={backgroundImage}
+	data-mobile-background-image={siteConfig.background.mobileImage}
 	style={`filter: blur(${siteConfig.background.blur}) brightness(${siteConfig.background.brightness})`}
 >
 	<canvas class="rain-canvas" data-rain-canvas></canvas>
@@ -153,8 +154,9 @@ const dimOverlay = siteConfig.background.overlay;
 			return;
 		}
 
-		const backgroundImage =
-			root.getAttribute('data-background-image') || '';
+		const backgroundImage = root.dataset.backgroundResolved === 'true'
+			? root.dataset.backgroundImage || ''
+			: (window.matchMedia('(max-width: 767px)').matches && root.dataset.mobileBackgroundImage) || root.dataset.backgroundImage || '';
 
 		/*
 		 * 没配置背景图时雨滴无从渲染，直接跳过，

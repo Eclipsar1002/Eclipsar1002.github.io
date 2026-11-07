@@ -21,6 +21,7 @@ const shared = {
 	visitorCount: "…",
 	background: {
 		image: appearance.backgroundImage,
+		mobileImage: appearance.mobileBackgroundImage,
 		blur: `${appearance.backgroundBlur}px`,
 		opacity: 1,
 		brightness: appearance.brightness,

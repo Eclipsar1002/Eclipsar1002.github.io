@@ -20,7 +20,8 @@ const pageTitle = title === siteConfig.name ? title : `${title} | ${siteConfig.n
 const currentPath = (Astro.url.pathname.replace(/^\/en(?=\/|$)/, '') || '/').replace(/-en(?=\/?$)/, '');
 const background = siteConfig.background;
 const backgroundImageStyle = [
-	`background-image: url("${background.image}")`,
+	`--desktop-background: url("${background.image}")`,
+	`--mobile-background: url("${background.mobileImage || background.image}")`,
 	`filter: blur(${background.blur}) brightness(${background.brightness})`,
 	`opacity: ${background.opacity}`,
 	`transform: scale(${background.scale})`,
@@ -46,7 +47,7 @@ const backgroundImageStyle = [
 	</head>
 	<body class="min-h-screen bg-black text-white antialiased">
 		<div class="pointer-events-none fixed inset-0 z-0 overflow-hidden" transition:persist="site-background">
-			<div data-site-background data-default-image={background.image} data-default-brightness={background.brightness} data-default-blur={background.blur} class="absolute inset-0 bg-cover bg-center bg-no-repeat" style={backgroundImageStyle}></div>
+			<div data-site-background data-default-image={background.image} data-default-mobile-image={background.mobileImage} data-default-brightness={background.brightness} data-default-blur={background.blur} class="absolute inset-0 bg-cover bg-center bg-no-repeat" style={backgroundImageStyle}></div>
 
 
 			<RainEffect />
@@ -62,4 +63,11 @@ const backgroundImageStyle = [
 		<VisitorCounter />
 	</body>
 </html>
+
+<style>
+  [data-site-background] { background-image: var(--desktop-background); }
+  @media (max-width: 767px) {
+    [data-site-background] { background-image: var(--mobile-background); }
+  }
+</style>
 

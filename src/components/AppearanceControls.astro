@@ -29,8 +29,9 @@
     const urlInput = controls.querySelector<HTMLInputElement>('[data-background-url]')!;
     const output = controls.querySelector<HTMLOutputElement>('[data-brightness-value]')!;
     const message = controls.querySelector<HTMLElement>('[data-appearance-message]')!;
+    const mobile = window.matchMedia('(max-width: 767px)');
     const defaults = {
-      image: background.dataset.defaultImage || '',
+      get image() { return (mobile.matches && background!.dataset.defaultMobileImage) || background!.dataset.defaultImage || ''; },
       brightness: Number(background.dataset.defaultBrightness || .65),
     };
     const safeImage = (value: unknown): string => {
@@ -41,8 +42,14 @@
       } catch { return ''; }
     };
     const saved = load<{ image?: string; brightness?: number; rainEnabled?: boolean } | null>('site.appearance', null);
+    // Older preferences also stored the default image when only brightness/rain changed.
+    // Let those browsers follow the new device defaults, preserving custom images.
+    const savedImage = safeImage(saved?.image);
+    let imageOverride = savedImage && ![
+      background.dataset.defaultImage, background.dataset.defaultMobileImage, '/demo.png',
+    ].some((image) => safeImage(image) === savedImage) ? savedImage : '';
     let state = {
-      image: safeImage(saved?.image) || safeImage(defaults.image),
+      image: imageOverride || safeImage(defaults.image),
       brightness: Math.max(.1, Math.min(1, Number.isFinite(saved?.brightness) ? saved!.brightness! : defaults.brightness)),
       rainEnabled: saved?.rainEnabled ?? true,
     };
@@ -51,6 +58,7 @@
       background!.style.filter = `blur(${background!.dataset.defaultBlur || '0px'}) brightness(${state.brightness})`;
       const rain = document.querySelector<HTMLElement>('[data-rain-effect]');
       if (rain) {
+        rain.dataset.backgroundResolved = 'true';
         rain.style.filter = `blur(${background!.dataset.defaultBlur || '0px'}) brightness(${state.brightness})`;
         if (safeImage(rain.dataset.backgroundImage) !== state.image || rain.hasAttribute('data-rain-enabled') !== state.rainEnabled) {
           rain.dataset.backgroundImage = state.image;
@@ -64,8 +72,16 @@
       output.value = `${brightness.value}%`;
       if (persist) save('site.appearance', state);
     }
-    urlInput.value = saved?.image || defaults.image;
+    urlInput.value = imageOverride || defaults.image;
     apply(false);
+    const onScreenChange = () => {
+      if (imageOverride) return;
+      state.image = safeImage(defaults.image);
+      urlInput.value = defaults.image;
+      apply(false);
+    };
+    mobile.addEventListener('change', onScreenChange);
+    document.addEventListener('astro:before-swap', () => mobile.removeEventListener('change', onScreenChange), { once: true });
     rainToggle.addEventListener('change', () => {
       state.rainEnabled = rainToggle.checked;
       apply();
@@ -83,12 +99,14 @@
       try {
         await preview.decode();
         state.image = image;
+        imageOverride = image;
         apply();
         message.textContent = '背景已应用，并保存在当前浏览器。';
       } catch { message.textContent = '图片无法加载，请检查链接。'; }
     });
     controls.querySelector('[data-reset-background]')!.addEventListener('click', () => {
       save('site.appearance', null);
+      imageOverride = '';
       state = { image: safeImage(defaults.image), brightness: defaults.brightness, rainEnabled: true };
       urlInput.value = defaults.image;
       apply(false);
