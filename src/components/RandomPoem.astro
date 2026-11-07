@@ -25,7 +25,6 @@ const first = poems[0];
 
 <div class="poem" data-random-poem data-poems={JSON.stringify(poems)}>
   <button class="poem-change" type="button" aria-label="换一句诗词" title="点击换一句诗词">
-    <span class="poem-quote" aria-hidden="true">❝</span>
     <span class="poem-verse" data-poem-verse>{first.verse}</span>
     <span class="poem-source" data-poem-source>{first.author}《{first.title}》</span>
   </button>
@@ -100,12 +99,10 @@ const first = poems[0];
   .poem { position: relative; top: 1.5rem; color: #fff; text-align: center; }
   .poem-change { display: block; width: 100%; padding: .65rem .25rem; border: 0; border-radius: .4rem; background: transparent; color: inherit; cursor: pointer; font-family: inherit; font-weight: 400; text-shadow: 0 1px 8px #0006; }
   .poem-change:focus-visible { outline: 1px solid #ffffffb3; outline-offset: 5px; }
-  .poem-quote { display: block; margin-bottom: .15rem; color: #ffffff50; font-size: 1.6rem; line-height: 1; text-shadow: none; user-select: none; }
   .poem-verse, .poem-source { opacity: 1; transform: translateY(0); transition: opacity .22s ease, transform .22s ease; }
   .poem-change.is-changing .poem-verse, .poem-change.is-changing .poem-source { opacity: 0; transform: translateY(3px); }
-  .poem-verse { display: block; font-size: clamp(1rem, 1.8vw, 1.2rem); line-height: 2; letter-spacing: .08em; text-wrap: balance; }
+  .poem-verse { display: block; color: rgb(255 255 255 / .85); font-size: clamp(1rem, 1.8vw, 1.2rem); font-weight: 400; line-height: 2; letter-spacing: .08em; text-wrap: balance; }
   .poem-source { display: block; margin-top: .4rem; padding-right: .25rem; font-size: .72rem; font-weight: 400; line-height: 1.8; letter-spacing: .06em; text-align: right; opacity: .8; }
-  .poem-source::before { content: ''; display: inline-block; width: 1.5rem; height: 1px; margin-right: .6rem; vertical-align: middle; background: #ffffff55; }
   .poem-change:hover .poem-verse { text-shadow: 0 0 12px #ffffff45, 0 1px 8px #0009; }
   @media (prefers-reduced-motion: reduce) { .poem-verse, .poem-source { transition: none; } }
 </style>
