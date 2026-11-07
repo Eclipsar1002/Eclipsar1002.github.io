@@ -1,75 +1,80 @@
-// A shared ambience engine survives Astro navigation. Rain is synthesized locally.
-let context: AudioContext | undefined;
-let buffer: AudioBuffer | undefined;
-let source: AudioBufferSourceNode | undefined;
-let gain: GainNode | undefined;
-let revision = 0;
+import { fetchPlaylist, type Track } from './meting';
+
+export const RAIN_PLAYLIST_ID = '18284047077';
+
+let tracks: Track[] = [];
+let index = 0;
+let loading = false;
+let loadError = '';
 let enabled = false;
 let volume = .4;
+let audio: HTMLAudioElement | undefined;
+let playlistRequest: Promise<void> | undefined;
 
-export function rainAudioState() { return { enabled, volume }; }
-function notify() { document.dispatchEvent(new Event('atlas:rain-audio')); }
+function player() {
+  if (audio) return audio;
+  audio = new Audio();
+  audio.preload = 'none';
+  audio.volume = volume;
+  audio.addEventListener('ended', () => { void nextRainTrack(1, true); });
+  audio.addEventListener('error', () => {
+    if (enabled) { enabled = false; notify('听雨歌单播放失败，请尝试切歌。'); }
+  });
+  return audio;
+}
+
+export function rainAudioState() { return { enabled, volume, loading, loadError, track: tracks[index] }; }
+function notify(message = '') { document.dispatchEvent(new CustomEvent('atlas:rain-audio', { detail: { message } })); }
+
+export function prepareRainPlaylist(retry = false): Promise<void> {
+  if (playlistRequest && !retry) return playlistRequest;
+  loading = true;
+  loadError = '';
+  notify('正在加载听雨歌单…');
+  playlistRequest = fetchPlaylist('netease', RAIN_PLAYLIST_ID, 740)
+    .then((result) => { tracks = result; index = 0; })
+    .catch((error: unknown) => { tracks = []; loadError = error instanceof Error ? error.message : '歌单加载失败'; })
+    .finally(() => { loading = false; notify(loadError ? '听雨歌单加载失败，请重新打开听雨模式。' : '听雨歌单已准备好。'); });
+  return playlistRequest;
+}
 
 export function setRainVolume(value: number) {
   volume = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : .4;
-  if (context && gain) gain.gain.setTargetAtTime(volume * .5, context.currentTime, .08);
+  if (audio) audio.volume = volume;
   notify();
 }
 
 export async function setRainAudio(next: boolean) {
-  const current = ++revision;
   if (!next) {
     enabled = false;
-    if (source && context && gain) {
-      gain.gain.cancelScheduledValues(context.currentTime);
-      gain.gain.setTargetAtTime(0, context.currentTime, .025);
-      source.stop(context.currentTime + .15);
-      source = undefined;
-      gain = undefined;
-    }
-    notify();
+    player().pause();
+    notify('听雨模式已关闭。');
     return;
   }
-  try {
-    const AudioEngine = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (!AudioEngine) throw new Error('Audio unavailable');
-    context ??= new AudioEngine();
-    await context.resume();
-    if (current !== revision) return;
-    if (!source) {
-      if (!buffer) {
-        buffer = context.createBuffer(2, context.sampleRate * 12, context.sampleRate);
-        for (let channel = 0; channel < 2; channel++) {
-          const samples = buffer.getChannelData(channel);
-          let brown = 0;
-          for (let i = 0; i < samples.length; i++) {
-            const white = Math.random() * 2 - 1;
-            brown = (brown + .02 * white) / 1.02;
-            samples[i] = white * .35 + brown * 2.8;
-          }
-        }
-      }
-      source = context.createBufferSource();
-      source.buffer = buffer;
-      source.loop = true;
-      const lowpass = context.createBiquadFilter();
-      lowpass.type = 'lowpass';
-      lowpass.frequency.value = 4200;
-      lowpass.Q.value = .5;
-      gain = context.createGain();
-      gain.gain.value = 0;
-      gain.gain.setTargetAtTime(volume * .5, context.currentTime, .3);
-      source.connect(lowpass).connect(gain).connect(context.destination);
-      // Disconnect this source's graph when it stops, including a quick restart.
-      const currentGain = gain;
-      const currentSource = source;
-      source.onended = () => { currentSource.disconnect(); lowpass.disconnect(); currentGain.disconnect(); };
-      source.start();
-    }
-    enabled = true;
-    notify();
-  } catch (error) {
-    if (current === revision) { enabled = false; notify(); }
-    throw error;
+  if (!tracks.length) {
+    await prepareRainPlaylist(Boolean(loadError));
+    if (!tracks.length) throw new Error('听雨歌单暂时不可用');
+  }
+  const element = player();
+  const track = tracks[index];
+  if (element.dataset.trackUrl !== track.url) { element.dataset.trackUrl = track.url; element.src = track.url; }
+  element.volume = volume;
+  await element.play();
+  enabled = true;
+  notify(`正在播放：${track.name} — ${track.artist}`);
+}
+
+export async function nextRainTrack(direction: -1 | 1, autoplay = enabled) {
+  if (!tracks.length) return;
+  index = (index + direction + tracks.length) % tracks.length;
+  const element = player();
+  element.dataset.trackUrl = tracks[index].url;
+  element.src = tracks[index].url;
+  notify(`已切换到：${tracks[index].name} — ${tracks[index].artist}`);
+  if (autoplay) {
+    try { await element.play(); enabled = true; }
+    catch { enabled = false; notify('歌曲无法播放，请再点一次听雨模式。'); }
   }
 }
+
+void prepareRainPlaylist();

@@ -6,7 +6,12 @@
     <input id="background-brightness" data-brightness type="range" min="10" max="100" step="1" />
     <label class="rain-toggle" for="background-rain">背景雨滴 <input id="background-rain" data-rain-toggle type="checkbox" /></label>
     <label class="rain-toggle" for="rain-listening">听雨模式 <input id="rain-listening" data-rain-listening type="checkbox" /></label>
-    <label for="rain-volume">雨声音量 <output data-rain-volume-value></output></label>
+    <p class="rain-track" data-rain-track aria-live="polite">网易云歌单 18284047077</p>
+    <div class="rain-track-actions">
+      <button type="button" data-rain-previous aria-label="听雨歌单上一首" title="上一首">⏮</button>
+      <button type="button" data-rain-next aria-label="听雨歌单下一首" title="下一首">⏭</button>
+    </div>
+    <label for="rain-volume">听雨歌单音量 <output data-rain-volume-value></output></label>
     <input id="rain-volume" data-rain-volume type="range" min="0" max="100" step="1" aria-label="雨声音量" />
     <label for="background-image">背景图片地址</label>
     <input id="background-image" data-background-url type="url" placeholder="https://… 或 /uploads/…" />
@@ -21,7 +26,7 @@
 
 <script>
   import { load, save } from '../lib/storage';
-  import { rainAudioState, setRainAudio, setRainVolume } from '../lib/rain-audio';
+  import { nextRainTrack, prepareRainPlaylist, rainAudioState, setRainAudio, setRainVolume } from '../lib/rain-audio';
 
   function mountAppearance() {
     const controls = document.querySelector<HTMLElement>('[data-appearance-controls]');
@@ -33,6 +38,8 @@
     const rainListening = controls.querySelector<HTMLInputElement>('[data-rain-listening]')!;
     const rainVolume = controls.querySelector<HTMLInputElement>('[data-rain-volume]')!;
     const rainVolumeValue = controls.querySelector<HTMLOutputElement>('[data-rain-volume-value]')!;
+    const rainTrack = controls.querySelector<HTMLElement>('[data-rain-track]')!;
+    const rainTrackButtons = controls.querySelectorAll<HTMLButtonElement>('[data-rain-previous], [data-rain-next]');
     const urlInput = controls.querySelector<HTMLInputElement>('[data-background-url]')!;
     const output = controls.querySelector<HTMLOutputElement>('[data-brightness-value]')!;
     const message = controls.querySelector<HTMLElement>('[data-appearance-message]')!;
@@ -40,12 +47,20 @@
     const syncRainAudio = () => {
       const audio = rainAudioState();
       rainListening.checked = audio.enabled;
+      rainListening.disabled = audio.loading;
+      rainTrackButtons.forEach((button) => { button.disabled = audio.loading || !audio.track; });
+      rainTrack.textContent = audio.track ? `${audio.track.name} — ${audio.track.artist}` : audio.loading ? '正在加载网易云歌单…' : audio.loadError ? '歌单暂时无法加载' : '网易云歌单 18284047077';
       rainVolume.value = String(Math.round(audio.volume * 100));
       rainVolumeValue.value = `${rainVolume.value}%`;
     };
     syncRainAudio();
-    document.addEventListener('atlas:rain-audio', syncRainAudio);
-    document.addEventListener('astro:before-swap', () => document.removeEventListener('atlas:rain-audio', syncRainAudio), { once: true });
+    const onRainAudio = (event: Event) => {
+      syncRainAudio();
+      const detail = (event as CustomEvent<{ message?: string }>).detail;
+      if (detail?.message && controls.isConnected) message.textContent = detail.message;
+    };
+    document.addEventListener('atlas:rain-audio', onRainAudio);
+    document.addEventListener('astro:before-swap', () => document.removeEventListener('atlas:rain-audio', onRainAudio), { once: true });
     rainVolume.addEventListener('input', () => {
       setRainVolume(Number(rainVolume.value) / 100);
       save('site.rain-volume', rainAudioState().volume);
@@ -117,12 +132,15 @@
           state.rainEnabled = true;
           apply();
         }
-        message.textContent = rainAudioState().enabled ? '听雨模式已开启，放松一下。' : '雨声已关闭。';
+        message.textContent = rainAudioState().enabled ? '听雨歌单已开始播放。主页播放器歌单保持不变。' : '听雨模式已关闭。';
       } catch {
         syncRainAudio();
-        message.textContent = '雨声未能播放，请再次点击开启。';
+        message.textContent = '听雨歌单加载或播放失败，请检查网络后重试。';
       }
     });
+    controls.querySelector('[data-rain-previous]')!.addEventListener('click', () => { void nextRainTrack(-1); });
+    controls.querySelector('[data-rain-next]')!.addEventListener('click', () => { void nextRainTrack(1); });
+    void prepareRainPlaylist();
     brightness.addEventListener('input', () => {
       state.brightness = Number(brightness.value) / 100;
       apply();
@@ -166,6 +184,9 @@
   label { display: flex; justify-content: space-between; color: #d4d4d8; margin-top: 1rem; margin-bottom: .65rem; }
   input { width: 100%; accent-color: white; }
   .rain-toggle { align-items: center; min-height: 32px; }
+  .rain-track { min-height: 1.5rem; margin: .25rem 0 0; overflow: hidden; color: #a1a1aa; font-size: .7rem; text-overflow: ellipsis; white-space: nowrap; }
+  .rain-track-actions { display: flex; gap: .5rem; margin-top: .4rem; }
+  .rain-track-actions button { min-width: 2.5rem; min-height: 2.25rem; background: #ffffff08; }
   input[type=checkbox] { width: 1.1rem; height: 1.1rem; }
   input[type=url] { border: 1px solid #ffffff25; padding: .65rem; border-radius: .5rem; background: #ffffff08; color: white; font-size: .8rem; }
   .appearance-actions { display: flex; gap: .6rem; margin-top: .75rem; }
