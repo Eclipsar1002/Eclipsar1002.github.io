@@ -3,6 +3,13 @@ interface Props { files?: Array<{ name: string; file: string }> }
 const { files = [] } = Astro.props;
 // Only serve site files or HTTPS links; never render executable URL schemes.
 const attachments = files.filter(({ file }) => file.startsWith('/') && !file.startsWith('//') || file.startsWith('https://'));
+function previewUrl(file: string) {
+  try {
+    const url = new URL(file, Astro.url);
+    url.hash = 'view=Fit';
+    return file.startsWith('/') ? `${url.pathname}${url.search}${url.hash}` : url.href;
+  } catch { return file; }
+}
 ---
 
 {attachments.length > 0 && <section class="mt-8 rounded-lg border border-white/15 bg-white/5 p-5" aria-label="PDF 附件">
@@ -18,7 +25,7 @@ const attachments = files.filter(({ file }) => file.startsWith('/') && !file.sta
       </div>
       <details class="pdf-preview">
         <summary aria-controls={`pdf-preview-${index}`}>页面内预览</summary>
-        <iframe id={`pdf-preview-${index}`} src={file} title={`${name || 'PDF 附件'}预览`} loading="lazy"></iframe>
+        <iframe id={`pdf-preview-${index}`} src={previewUrl(file)} title={`${name || 'PDF 附件'}预览`} loading="lazy"></iframe>
       </details>
     </li>)}
   </ul>
@@ -30,6 +37,6 @@ const attachments = files.filter(({ file }) => file.startsWith('/') && !file.sta
   .pdf-preview { margin-top: .75rem; }
   .pdf-preview summary { width: fit-content; color: #d4d4d8; cursor: pointer; font-size: .8rem; }
   .pdf-preview summary:hover { color: white; }
-  .pdf-preview iframe { display: block; width: 100%; height: min(68svh, 760px); min-height: 360px; margin-top: .75rem; border: 1px solid #ffffff20; border-radius: .375rem; background: #fff; }
-  @media (max-width: 640px) { .pdf-preview iframe { height: 62svh; min-height: 320px; } }
+  .pdf-preview iframe { display: block; width: 100%; height: min(82svh, 960px); min-height: 560px; margin-top: .75rem; border: 1px solid #ffffff20; border-radius: .375rem; background: #fff; }
+  @media (max-width: 640px) { .pdf-preview iframe { height: 80svh; min-height: 460px; } }
 </style>
