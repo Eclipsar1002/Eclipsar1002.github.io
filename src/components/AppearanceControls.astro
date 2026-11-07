@@ -5,6 +5,9 @@
     <label for="background-brightness">背景明暗 <output data-brightness-value></output></label>
     <input id="background-brightness" data-brightness type="range" min="10" max="100" step="1" />
     <label class="rain-toggle" for="background-rain">背景雨滴 <input id="background-rain" data-rain-toggle type="checkbox" /></label>
+    <label class="rain-toggle" for="rain-listening">听雨模式 <input id="rain-listening" data-rain-listening type="checkbox" /></label>
+    <label for="rain-volume">雨声音量 <output data-rain-volume-value></output></label>
+    <input id="rain-volume" data-rain-volume type="range" min="0" max="100" step="1" aria-label="雨声音量" />
     <label for="background-image">背景图片地址</label>
     <input id="background-image" data-background-url type="url" placeholder="https://… 或 /uploads/…" />
     <div class="appearance-actions">
@@ -18,6 +21,7 @@
 
 <script>
   import { load, save } from '../lib/storage';
+  import { rainAudioState, setRainAudio, setRainVolume } from '../lib/rain-audio';
 
   function mountAppearance() {
     const controls = document.querySelector<HTMLElement>('[data-appearance-controls]');
@@ -26,9 +30,26 @@
     controls.dataset.bound = 'true';
     const brightness = controls.querySelector<HTMLInputElement>('[data-brightness]')!;
     const rainToggle = controls.querySelector<HTMLInputElement>('[data-rain-toggle]')!;
+    const rainListening = controls.querySelector<HTMLInputElement>('[data-rain-listening]')!;
+    const rainVolume = controls.querySelector<HTMLInputElement>('[data-rain-volume]')!;
+    const rainVolumeValue = controls.querySelector<HTMLOutputElement>('[data-rain-volume-value]')!;
     const urlInput = controls.querySelector<HTMLInputElement>('[data-background-url]')!;
     const output = controls.querySelector<HTMLOutputElement>('[data-brightness-value]')!;
     const message = controls.querySelector<HTMLElement>('[data-appearance-message]')!;
+    setRainVolume(load<number>('site.rain-volume', .4));
+    const syncRainAudio = () => {
+      const audio = rainAudioState();
+      rainListening.checked = audio.enabled;
+      rainVolume.value = String(Math.round(audio.volume * 100));
+      rainVolumeValue.value = `${rainVolume.value}%`;
+    };
+    syncRainAudio();
+    document.addEventListener('atlas:rain-audio', syncRainAudio);
+    document.addEventListener('astro:before-swap', () => document.removeEventListener('atlas:rain-audio', syncRainAudio), { once: true });
+    rainVolume.addEventListener('input', () => {
+      setRainVolume(Number(rainVolume.value) / 100);
+      save('site.rain-volume', rainAudioState().volume);
+    });
     const mobile = window.matchMedia('(max-width: 767px)');
     const defaults = {
       get image() { return (mobile.matches && background!.dataset.defaultMobileImage) || background!.dataset.defaultImage || ''; },
@@ -87,6 +108,21 @@
       apply();
       message.textContent = state.rainEnabled ? '雨滴已开启。' : '雨滴已关闭。';
     });
+    rainListening.addEventListener('change', async () => {
+      const next = rainListening.checked;
+      try {
+        await setRainAudio(next);
+        if (!controls.isConnected) return;
+        if (next && rainAudioState().enabled) {
+          state.rainEnabled = true;
+          apply();
+        }
+        message.textContent = rainAudioState().enabled ? '听雨模式已开启，放松一下。' : '雨声已关闭。';
+      } catch {
+        syncRainAudio();
+        message.textContent = '雨声未能播放，请再次点击开启。';
+      }
+    });
     brightness.addEventListener('input', () => {
       state.brightness = Number(brightness.value) / 100;
       apply();
@@ -105,6 +141,9 @@
       } catch { message.textContent = '图片无法加载，请检查链接。'; }
     });
     controls.querySelector('[data-reset-background]')!.addEventListener('click', () => {
+      void setRainAudio(false);
+      setRainVolume(.4);
+      save('site.rain-volume', .4);
       save('site.appearance', null);
       imageOverride = '';
       state = { image: safeImage(defaults.image), brightness: defaults.brightness, rainEnabled: true };
@@ -122,7 +161,7 @@
   summary { list-style: none; display: flex; gap: .4rem; align-items: center; justify-content: center; min-height: 44px; padding: .65rem 1rem; border: 1px solid #ffffff30; border-radius: 2rem; background: #18181bd9; color: #e4e4e7; cursor: pointer; backdrop-filter: blur(20px); }
   summary::-webkit-details-marker { display: none; }
   summary:hover { border-color: #ffffff70; }
-  .appearance-panel { position: absolute; bottom: 3.5rem; right: 0; width: min(20rem, calc(100vw - 2.5rem)); padding: 1.25rem; border: 1px solid #ffffff25; border-radius: 1rem; background: #151517f5; backdrop-filter: blur(24px); box-shadow: 0 20px 60px #0008; }
+  .appearance-panel { position: absolute; bottom: 3.5rem; right: 0; width: min(20rem, calc(100vw - 2.5rem)); max-height: calc(100dvh - 7rem); overflow-y: auto; padding: 1.25rem; border: 1px solid #ffffff25; border-radius: 1rem; background: #151517f5; backdrop-filter: blur(24px); box-shadow: 0 20px 60px #0008; }
   .appearance-title { color: #fafafa; font-size: 1rem; margin-bottom: 1.25rem; }
   label { display: flex; justify-content: space-between; color: #d4d4d8; margin-top: 1rem; margin-bottom: .65rem; }
   input { width: 100%; accent-color: white; }
