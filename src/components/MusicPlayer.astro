@@ -87,6 +87,7 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
 
   import { load, save } from '../lib/storage';
   import { bindMusicVisualizer, unlockMusicVisualizer } from '../lib/audio-spectrum';
+  import { bindMediaSession } from '../lib/media-session';
 
   const fmt = (t) => {
     if (!isFinite(t) || t < 0) t = 0;
@@ -105,6 +106,7 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
   const createGlobalPlayer = () => {
     const audio = new Audio();
     audio.crossOrigin = 'anonymous';
+    audio.setAttribute('playsinline', '');
 
     audio.preload = 'metadata';
     audio.volume = load('music.volume', 0.7);
@@ -121,7 +123,7 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
       ),
 
       mode: load('music.mode', 'list'),
-      quality: load('music.quality', autoQuality()),
+      quality: autoQuality() === '320' ? '320' : load('music.quality', autoQuality()),
 
       failed: new Set(),
 
@@ -168,11 +170,10 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
     };
 
     player.renderCurrent = () => {
-      const ui = player.ui;
-
-      if (!ui) return;
-
       const track = player.tracks[player.idx];
+      player.mediaSession?.update(track);
+      const ui = player.ui;
+      if (!ui) return;
 
       if (!track) {
         ui.titleEl.textContent = '暂无曲目';
@@ -309,6 +310,21 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
        播放控制
        ========================================================= */
 
+    player.play = () => {
+      if (!player.tracks.length) { player.setError('歌单正在加载，请稍后点击播放。'); return; }
+      player.setError('');
+      unlockMusicVisualizer(audio);
+      if (audio.error) audio.load();
+      const source = audio.src;
+      void audio.play().catch((error) => {
+        if (audio.src !== source || error?.name === 'AbortError') return;
+        player.setError(error?.name === 'NotAllowedError'
+          ? '请在网页内点击播放，允许浏览器播放音乐。'
+          : '暂时无法播放，请重试或手动切换下一首。');
+        player.renderPlayback();
+      });
+    };
+
     player.loadAndPlay = (
       index,
       autoplay = false
@@ -334,7 +350,7 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
       audio.src = track.url;
 
       if (autoplay) {
-        audio.play().catch(() => {});
+        player.play();
       }
 
       player.persist(true);
@@ -348,25 +364,18 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
         auto
       ) {
         audio.currentTime = 0;
-        audio.play().catch(() => {});
+        player.play();
         return;
       }
 
       if (player.mode === 'shuffle') {
-        let nextIndex;
-
-        do {
-          nextIndex = Math.floor(
-            Math.random() *
-              player.tracks.length
-          );
-        } while (
-          player.tracks.length > 1 &&
-          (
-            nextIndex === player.idx ||
-            player.failed.has(nextIndex)
-          )
-        );
+        const candidates = player.tracks.map((_, index) => index)
+          .filter((index) => index !== player.idx && !player.failed.has(index));
+        if (!candidates.length && auto) {
+          player.setError('暂无其他可播放歌曲，请手动重试。');
+          return;
+        }
+        const nextIndex = candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : player.idx + 1;
 
         player.loadAndPlay(
           nextIndex,
@@ -548,7 +557,7 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
           opts.resumePlayback &&
           wasPlaying
         ) {
-          audio.play().catch(() => {});
+          player.play();
         }
       } catch (err) {
         console.error(
@@ -633,9 +642,8 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
       'error',
       () => {
         /*
-         * 只有真正的歌曲播放失败才跳下一首。
-         * Astro 页面切换不会操作 audio.src，
-         * 因此不会触发这里。
+         * Stop on source failures instead of cascading through unavailable tracks.
+         * A manual next action or successful retry can resume playback.
          */
         if (!player.tracks.length) {
           return;
@@ -645,12 +653,8 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
           player.idx
         );
 
-        if (
-          player.failed.size <
-          player.tracks.length
-        ) {
-          player.next(true);
-        }
+        audio.pause();
+        player.setError('音频加载失败，已停止自动切歌。请重试或手动切换下一首。');
       }
     );
 
@@ -663,6 +667,10 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
       () => player.persist(true)
     );
 
+    audio.addEventListener('playing', () => { player.failed.delete(player.idx); player.setError(''); });
+    player.mediaSession = bindMediaSession(audio, {
+      play: () => player.play(), next: () => player.next(false), previous: () => player.prev(),
+    });
     return player;
   };
 
@@ -762,11 +770,8 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
     ui.playBtn?.addEventListener(
       'click',
       () => {
-        unlockMusicVisualizer(player.audio);
         if (player.audio.paused) {
-          player.audio
-            .play()
-            .catch(() => {});
+          player.play();
         } else {
           player.audio.pause();
         }

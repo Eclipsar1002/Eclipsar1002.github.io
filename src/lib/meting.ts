@@ -130,6 +130,8 @@ export const DEFAULT_BITRATE = '740'
  */
 export function autoQuality(): string {
   if (typeof navigator === 'undefined') return DEFAULT_BITRATE
+  if (/iPhone|iPad|iPod|Android/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return '320'
   const conn = (
     navigator as Navigator & {
       connection?: { saveData?: boolean; effectiveType?: string; type?: string }

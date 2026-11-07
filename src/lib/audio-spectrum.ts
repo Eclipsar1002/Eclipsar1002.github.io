@@ -2,6 +2,10 @@ type AudioGraph = { context: AudioContext; analyser: AnalyserNode; source: Media
 const graphs = new WeakMap<HTMLAudioElement, AudioGraph>();
 
 function getGraph(audio: HTMLAudioElement): AudioGraph | undefined {
+  // iOS may suspend Web Audio on lock. Leave the native media output untouched.
+  // Keep the cover rotation but omit PCM lines on iOS, rather than fake a spectrum.
+  if (/iPhone|iPad|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return;
   const existing = graphs.get(audio);
   if (existing) return existing;
   if (typeof AudioContext === 'undefined') return;
