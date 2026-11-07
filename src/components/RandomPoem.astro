@@ -54,8 +54,6 @@ const first = poems[0];
         const controller = new AbortController();
         request = controller;
         const previous = root.querySelector('[data-poem-verse]')!.textContent;
-        // Immediate local response, replaced by the larger online collection when ready.
-        localPoem();
         button.setAttribute('aria-busy', 'true');
         const timer = setTimeout(() => controller.abort(), 6000);
         try {
@@ -67,10 +65,13 @@ const first = poems[0];
           if (disposed || request !== controller || !root.isConnected) return;
           if (typeof data.content !== 'string' || !data.content.trim() || data.content.length > 120 ||
             typeof data.author !== 'string' || !data.author.trim() || data.author.length > 60 ||
-            typeof data.origin !== 'string' || !data.origin.trim() || data.origin.length > 160) return;
-          // APIs can repeat a random result; keep the different local verse in that case.
-          if (data.content.trim() !== previous) show({ verse: data.content.trim(), author: data.author.trim(), title: data.origin.trim() });
-        } catch { /* The local collection remains readable offline or if the service fails. */ }
+            typeof data.origin !== 'string' || !data.origin.trim() || data.origin.length > 160) throw new Error('Invalid poetry response');
+          if (data.content.trim() === previous) localPoem();
+          else show({ verse: data.content.trim(), author: data.author.trim(), title: data.origin.trim() });
+        } catch {
+          // Only the active request may change the verse, including after a timeout.
+          if (!disposed && request === controller && root.isConnected) localPoem();
+        }
         finally {
           clearTimeout(timer);
           if (request === controller) button.removeAttribute('aria-busy');
