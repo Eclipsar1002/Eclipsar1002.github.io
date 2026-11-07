@@ -15,7 +15,10 @@ const poems = [
   { verse: '落霞与孤鹜齐飞，秋水共长天一色。', author: '王勃', title: '滕王阁序' },
   { verse: '浮云一别后，流水十年间。', author: '韦应物', title: '淮上喜会梁川故人' },
   { verse: '山光悦鸟性，潭影空人心。', author: '常建', title: '题破山寺后禅院' },
-  { verse: '满船清梦压星河。', author: '唐温如', title: '题龙阳县青草湖' },
+  { verse: '满船清梦压星河。', author: '唐珙', title: '题龙阳县青草湖' },
+  { verse: '松月生夜凉，风泉满清听。', author: '孟浩然', title: '宿业师山房期丁大不至' },
+  { verse: '曲终人不见，江上数峰青。', author: '钱起', title: '省试湘灵鼓瑟' },
+  { verse: '微微风簇浪，散作满河星。', author: '查慎行', title: '舟夜书所见' },
 ];
 const first = poems[0];
 ---
@@ -34,17 +37,48 @@ const first = poems[0];
       root.dataset.bound = 'true';
       const poems: Array<{ verse: string; author: string; title: string }> = JSON.parse(root.dataset.poems || '[]');
       if (!poems.length) return;
-      let current = -1;
-      function change() {
-        // Exclude the current verse so every tap produces a different one.
-        const pick = Math.floor(Math.random() * (poems.length - (current >= 0 ? 1 : 0)));
-        current = current >= 0 && pick >= current ? pick + 1 : pick;
-        const poem = poems[current];
+      const button = root.querySelector('button')!;
+      let request: AbortController | undefined;
+      let disposed = false;
+      function show(poem: { verse: string; author: string; title: string }) {
         root.querySelector('[data-poem-verse]')!.textContent = poem.verse;
         root.querySelector('[data-poem-source]')!.textContent = `— ${poem.author}《${poem.title}》`;
       }
-      change();
-      root.querySelector('button')!.addEventListener('click', change);
+      function localPoem() {
+        const current = root.querySelector('[data-poem-verse]')!.textContent;
+        const candidates = poems.filter((poem) => poem.verse !== current);
+        show(candidates[Math.floor(Math.random() * candidates.length)] || poems[0]);
+      }
+      async function change() {
+        request?.abort();
+        const controller = new AbortController();
+        request = controller;
+        const previous = root.querySelector('[data-poem-verse]')!.textContent;
+        // Immediate local response, replaced by the larger online collection when ready.
+        localPoem();
+        button.setAttribute('aria-busy', 'true');
+        const timer = setTimeout(() => controller.abort(), 6000);
+        try {
+          const response = await fetch('https://v1.jinrishici.com/all.json', {
+            signal: controller.signal, cache: 'no-store', referrerPolicy: 'no-referrer',
+          });
+          if (!response.ok) throw new Error('Poetry service unavailable');
+          const data = await response.json();
+          if (disposed || request !== controller || !root.isConnected) return;
+          if (typeof data.content !== 'string' || !data.content.trim() || data.content.length > 120 ||
+            typeof data.author !== 'string' || !data.author.trim() || data.author.length > 60 ||
+            typeof data.origin !== 'string' || !data.origin.trim() || data.origin.length > 160) return;
+          // APIs can repeat a random result; keep the different local verse in that case.
+          if (data.content.trim() !== previous) show({ verse: data.content.trim(), author: data.author.trim(), title: data.origin.trim() });
+        } catch { /* The local collection remains readable offline or if the service fails. */ }
+        finally {
+          clearTimeout(timer);
+          if (request === controller) button.removeAttribute('aria-busy');
+        }
+      }
+      void change();
+      button.addEventListener('click', () => { void change(); });
+      document.addEventListener('astro:before-swap', () => { disposed = true; request?.abort(); }, { once: true });
     });
   }
   mountPoems();
@@ -53,9 +87,9 @@ const first = poems[0];
 
 <style>
   .poem { color: #fff; text-align: center; }
-  .poem-change { display: block; width: 100%; padding: .65rem .25rem; border: 0; border-radius: .4rem; background: transparent; color: inherit; cursor: pointer; font-family: 'Kaiti SC', 'STKaiti', 'KaiTi', 'Songti SC', 'Noto Serif CJK SC', 'SimSun', serif; text-shadow: 0 1px 8px #0009; }
+  .poem-change { display: block; width: 100%; padding: .65rem .25rem; border: 0; border-radius: .4rem; background: transparent; color: inherit; cursor: pointer; font-family: 'Songti SC', 'STSong', 'Noto Serif CJK SC', 'SimSun', serif; font-weight: 300; text-shadow: 0 1px 8px #0006; }
   .poem-change:focus-visible { outline: 1px solid #ffffffb3; outline-offset: 5px; }
-  .poem-verse { display: block; font-size: clamp(1.1rem, 2.2vw, 1.4rem); line-height: 1.9; letter-spacing: .1em; text-wrap: balance; }
-  .poem-source { display: block; margin-top: .4rem; font-size: .8rem; line-height: 1.8; letter-spacing: .08em; opacity: .8; }
+  .poem-verse { display: block; font-size: clamp(1.15rem, 2.3vw, 1.45rem); line-height: 2; letter-spacing: .16em; text-wrap: balance; transform: scaleX(.88); }
+  .poem-source { display: block; margin-top: .4rem; font-size: .8rem; line-height: 1.8; letter-spacing: .12em; opacity: .8; transform: scaleX(.92); }
   .poem-change:hover .poem-verse { text-shadow: 0 0 12px #ffffff45, 0 1px 8px #0009; }
 </style>
