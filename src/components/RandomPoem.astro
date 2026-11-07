@@ -1,0 +1,61 @@
+---
+const poems = [
+  { verse: '且将新火试新茶，诗酒趁年华。', author: '苏轼', title: '望江南·超然台作' },
+  { verse: '行到水穷处，坐看云起时。', author: '王维', title: '终南别业' },
+  { verse: '人闲桂花落，夜静春山空。', author: '王维', title: '鸟鸣涧' },
+  { verse: '明月松间照，清泉石上流。', author: '王维', title: '山居秋暝' },
+  { verse: '夜阑卧听风吹雨，铁马冰河入梦来。', author: '陆游', title: '十一月四日风雨大作·其二' },
+  { verse: '小楼一夜听春雨，深巷明朝卖杏花。', author: '陆游', title: '临安春雨初霁' },
+  { verse: '山中何事？松花酿酒，春水煎茶。', author: '张可久', title: '人月圆·山中书事' },
+  { verse: '疏影横斜水清浅，暗香浮动月黄昏。', author: '林逋', title: '山园小梅·其一' },
+  { verse: '星垂平野阔，月涌大江流。', author: '杜甫', title: '旅夜书怀' },
+  { verse: '长风破浪会有时，直挂云帆济沧海。', author: '李白', title: '行路难·其一' },
+  { verse: '此中有真意，欲辨已忘言。', author: '陶渊明', title: '饮酒·其五' },
+  { verse: '掬水月在手，弄花香满衣。', author: '于良史', title: '春山夜月' },
+  { verse: '落霞与孤鹜齐飞，秋水共长天一色。', author: '王勃', title: '滕王阁序' },
+  { verse: '浮云一别后，流水十年间。', author: '韦应物', title: '淮上喜会梁川故人' },
+  { verse: '山光悦鸟性，潭影空人心。', author: '常建', title: '题破山寺后禅院' },
+  { verse: '满船清梦压星河。', author: '唐温如', title: '题龙阳县青草湖' },
+];
+const first = poems[0];
+---
+
+<div class="poem" data-random-poem data-poems={JSON.stringify(poems)}>
+  <button class="poem-change" type="button" aria-label="换一句诗词" title="点击换一句诗词">
+    <span class="poem-verse" data-poem-verse>{first.verse}</span>
+    <span class="poem-source" data-poem-source>— {first.author}《{first.title}》</span>
+  </button>
+</div>
+
+<script>
+  function mountPoems() {
+    document.querySelectorAll<HTMLElement>('[data-random-poem]').forEach((root) => {
+      if (root.dataset.bound) return;
+      root.dataset.bound = 'true';
+      const poems: Array<{ verse: string; author: string; title: string }> = JSON.parse(root.dataset.poems || '[]');
+      if (!poems.length) return;
+      let current = -1;
+      function change() {
+        // Exclude the current verse so every tap produces a different one.
+        const pick = Math.floor(Math.random() * (poems.length - (current >= 0 ? 1 : 0)));
+        current = current >= 0 && pick >= current ? pick + 1 : pick;
+        const poem = poems[current];
+        root.querySelector('[data-poem-verse]')!.textContent = poem.verse;
+        root.querySelector('[data-poem-source]')!.textContent = `— ${poem.author}《${poem.title}》`;
+      }
+      change();
+      root.querySelector('button')!.addEventListener('click', change);
+    });
+  }
+  mountPoems();
+  document.addEventListener('astro:page-load', mountPoems);
+</script>
+
+<style>
+  .poem { color: #fff; text-align: center; }
+  .poem-change { display: block; width: 100%; padding: .65rem .25rem; border: 0; border-radius: .4rem; background: transparent; color: inherit; cursor: pointer; font-family: 'Kaiti SC', 'STKaiti', 'KaiTi', 'Songti SC', 'Noto Serif CJK SC', 'SimSun', serif; text-shadow: 0 1px 8px #0009; }
+  .poem-change:focus-visible { outline: 1px solid #ffffffb3; outline-offset: 5px; }
+  .poem-verse { display: block; font-size: clamp(1.1rem, 2.2vw, 1.4rem); line-height: 1.9; letter-spacing: .1em; text-wrap: balance; }
+  .poem-source { display: block; margin-top: .4rem; font-size: .8rem; line-height: 1.8; letter-spacing: .08em; opacity: .8; }
+  .poem-change:hover .poem-verse { text-shadow: 0 0 12px #ffffff45, 0 1px 8px #0009; }
+</style>

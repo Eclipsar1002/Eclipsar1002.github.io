@@ -77,10 +77,9 @@ const { dateLocale, greetings, timeZone } = today;
 		const steamStatusText = document.querySelector('[data-steam-status-text]');
 		const steamStatusDot = document.querySelector('[data-steam-status-dot]');
 		const steamGameLogo = document.querySelector('[data-steam-game-logo]');
-		const visitorCount = document.querySelector('[data-visitor-count]');
 
 		cleanupHomeEnhancements();
-		if (!greeting && !time && !steamStatus && !visitorCount) return;
+		if (!greeting && !time && !steamStatus) return;
 
 		const formatter = new Intl.DateTimeFormat(config.dateLocale, {
 			timeZone: config.timeZone,

@@ -6,7 +6,6 @@ import { getLocaleFromUrl, getSiteConfig, locales, localizePath } from '../confi
 import '../styles/global.css';
 import RainEffect from '../components/RainEffect.astro';
 import AppearanceControls from '../components/AppearanceControls.astro';
-import VisitorCounter from '../components/VisitorCounter.astro';
 interface Props {
 	title?: string;
 	description?: string;
@@ -60,7 +59,6 @@ const backgroundImageStyle = [
 		<div class="relative z-10">
 			<Footer />
 		</div>
-		<VisitorCounter />
 	</body>
 </html>
 

@@ -2,6 +2,7 @@
 import HomeEnhancements from '../components/HomeEnhancements.astro';
 import SocialIcon from '../components/SocialIcon.astro';
 import MusicPlayer from '../components/MusicPlayer.astro'; 
+import RandomPoem from '../components/RandomPoem.astro';
 import { getLocaleFromUrl, getSiteConfig } from '../config/site';
 
 interface Props {
@@ -17,15 +18,7 @@ const timeSeparator = locale === 'zh' ? '：' : ':';
 
 <section class="mx-auto grid max-w-6xl gap-14 px-5 py-16 md:grid-cols-[0.85fr_1.15fr] md:items-center md:py-24 lg:gap-20">
 	<div class="order-2 md:order-1 md:pt-10">
-		<p
-			data-visitor-count
-			title="全站累计访问次数，由不蒜子实时统计；刷新和打开新页面也会计数"
-			data-template={home.visitorText}
-			data-fallback-count={siteConfig.visitorCount}
-			class="text-center text-sm text-zinc-500 md:text-left"
-		>
-			{home.visitorText.replace('{count}', siteConfig.visitorCount)}
-		</p>
+		<RandomPoem />
 		<div class="mx-auto mt-8 max-w-md">
 			<MusicPlayer playlistId={siteConfig.music?.playlistId ?? ''} />
 		</div>

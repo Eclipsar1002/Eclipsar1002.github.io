@@ -18,7 +18,6 @@ const shared = {
 	email: "fxy2004@mail.ustc.edu.cn",
 	emailIcon: "@",
 	avatar: "/avatar.png",
-	visitorCount: "…",
 	background: {
 		image: appearance.backgroundImage,
 		mobileImage: appearance.mobileBackgroundImage,
@@ -89,7 +88,6 @@ const siteConfigs = {
 		},
 		home: {
 			eyebrowNote: "愿我们都有鲜衣怒马的少年意气，愿我们在任何时候都无愧于心。",
-			visitorText: "访客编号 #{count}，欢迎来到互联网的小角落",
 			headline: "把上课、折腾和突然冒出的想法都放在这里。",
 			intro: `关于这个博客，我更愿意看作是我成长经历的一个记录。
 			作为一名社恐人士，我希望有一个地方可以安放自己的内心思考，偶尔的焦虑，写下的长文，以及乱七八糟的飞书文档和网盘文件，因此便有了该博客。
