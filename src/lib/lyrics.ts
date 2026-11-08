@@ -21,12 +21,9 @@ export function createLyrics() {
     if (!root) return;
     if (rendered !== root) {
       root.replaceChildren();
-      if (lines.length) lines.forEach((line) => {
-        const element = document.createElement('p');
-        element.textContent = line.text;
-        root.append(element);
-      });
-      else { const element = document.createElement('p'); element.textContent = status; root.append(element); }
+      const element = document.createElement('p');
+      element.textContent = lines.length ? '♪' : status;
+      root.append(element);
       rendered = root;
       active = -2;
     }
@@ -34,10 +31,14 @@ export function createLyrics() {
     for (let i = 0; i < lines.length && lines[i].time <= time; i++) index = i;
     if (index === active) return;
     active = index;
-    [...root.children].forEach((element, i) => element.classList.toggle('is-current', i === index));
-    const current = root.children[Math.max(index, 0)] as HTMLElement | undefined;
-    if (current) root.scrollTo({ top: current.offsetTop - root.offsetTop - (root.clientHeight - current.offsetHeight) / 2,
-      behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    const current = root.firstElementChild as HTMLElement;
+    current.textContent = lines.length ? (index >= 0 ? lines[index].text : '♪') : status;
+    current.classList.toggle('is-current', index >= 0);
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      current.getAnimations().forEach((animation) => animation.cancel());
+      current.animate([{ opacity: .3, transform: 'translateY(5px)' }, { opacity: 1, transform: 'translateY(0)' }],
+        { duration: 200, easing: 'ease-out' });
+    }
   }
   async function update(track: { url?: string; lrc?: string } | undefined, time: () => number) {
     const next = `${track?.url || ''}|${track?.lrc || ''}`;
