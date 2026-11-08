@@ -1,0 +1,36 @@
+---
+import { getCollection, render } from 'astro:content';
+import MarkdownLayout from '../../layouts/MarkdownLayout.astro';
+import { momentTransitionName } from '../../lib/moments';
+
+export async function getStaticPaths() {
+  const moments = await getCollection('moments', ({ data }) => !data.draft);
+  return moments.map(moment => ({ params: { slug: moment.id }, props: { moment } }));
+}
+
+const { moment } = Astro.props;
+const { Content } = await render(moment);
+---
+
+<MarkdownLayout title={moment.data.title || '日常碎片'} description="" date={moment.data.pubDate} tags={moment.data.tags} heroTransitionName={momentTransitionName(moment.id)} backHref="/moments/">
+  <Content />
+  {moment.data.images.length > 0 && (
+    <div class="moment-photos">
+      {moment.data.images.map(image => (
+        <figure>
+          <a href={image.src} target="_blank" rel="noreferrer" aria-label={image.alt || '查看原图'}>
+            <img src={image.src} alt={image.alt} loading="lazy" decoding="async" />
+          </a>
+          {image.alt && <figcaption>{image.alt}</figcaption>}
+        </figure>
+      ))}
+    </div>
+  )}
+</MarkdownLayout>
+
+<style>
+  .moment-photos { display: grid; gap: 1.5rem; margin-top: 2rem; }
+  figure { margin: 0; }
+  img { display: block; width: 100%; height: auto; border-radius: .75rem; }
+  figcaption { margin-top: .65rem; color: #a1a1aa; font-size: .85rem; text-align: center; }
+</style>

@@ -1,5 +1,6 @@
 ---
 import { getCollection, render } from 'astro:content';
+import { momentTransitionName, momentUrl } from '../lib/moments';
 
 interface Props { limit?: number }
 const { limit } = Astro.props;
@@ -19,12 +20,12 @@ const dateFormat = new Intl.DateTimeFormat('zh-CN', {
       <article class="moment" id={entry.id}>
         <div class="moment-date">
           <span class="moment-dot" aria-hidden="true"></span>
-          <a href={`/moments/#${encodeURIComponent(entry.id)}`} aria-label="这条动态的链接">
+          <a href={momentUrl(entry.id)} aria-label="查看这条动态">
             <time datetime={entry.data.pubDate.toISOString()}>{dateFormat.format(entry.data.pubDate)}</time>
           </a>
         </div>
         <div class="moment-card">
-          {entry.data.title && <h2 transition:name={`moment-title-${[...entry.id].map(char => char.codePointAt(0)!.toString(16)).join('-')}`} transition:animate="slide">{entry.data.title}</h2>}
+          {entry.data.title && <h2 transition:name={momentTransitionName(entry.id)}><a href={momentUrl(entry.id)}>{entry.data.title}</a></h2>}
           <div class="prose-content"><Content /></div>
           {entry.data.images.length > 0 && (
             <div class:list={['moment-images', { 'single-image': entry.data.images.length === 1 }]}>
