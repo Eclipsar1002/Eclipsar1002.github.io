@@ -84,7 +84,7 @@
       // A still background needs no animation loop when only glass is enabled.
       const backgroundBlur = state.glassEnabled ? (staticGlass ? `max(8px, ${configuredBlur})` : configuredBlur) : '0px';
       background!.style.filter = `blur(${backgroundBlur}) brightness(${state.brightness})`;
-      background!.style.scale = staticGlass ? '1.08' : '1';
+      background!.style.scale = '1';
       const rain = document.querySelector<HTMLElement>('[data-rain-effect]');
       if (rain) {
         rain.dataset.backgroundResolved = 'true';
