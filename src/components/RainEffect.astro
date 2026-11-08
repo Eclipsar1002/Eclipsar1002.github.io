@@ -15,6 +15,8 @@ const dimOverlay = siteConfig.background.overlay;
 	class="rain-effect"
 	data-rain-effect
 	data-rain-enabled
+	data-drops-enabled
+	data-glass-enabled
 	data-background-image={backgroundImage}
 	data-mobile-background-image={siteConfig.background.mobileImage}
 	style={`filter: blur(${siteConfig.background.blur}) brightness(${siteConfig.background.brightness})`}
@@ -113,7 +115,9 @@ const dimOverlay = siteConfig.background.overlay;
 
 	const bootRain = async (
 		canvas: HTMLCanvasElement,
-		backgroundImage: string
+		backgroundImage: string,
+		dropsEnabled: boolean,
+		glassEnabled: boolean
 	) => {
 		if (!supportsWebGL2(canvas)) {
 			console.info('[RainEffect] WebGL2 不可用，降级为纯静态背景。');
@@ -134,9 +138,21 @@ const dimOverlay = siteConfig.background.overlay;
 		const fx = new RaindropFX({
 			canvas,
 			background: bitmap,
-			spawnLimit: lite ? 1100 : 2000,
-			dropletsPerSeconds: lite ? 320 : 500
+			spawnLimit: dropsEnabled ? (lite ? 1100 : 2000) : -1,
+			dropletsPerSeconds: dropsEnabled ? (lite ? 320 : 500) : 0,
+			backgroundBlurSteps: glassEnabled ? 3 : 0,
+			mist: glassEnabled
 		});
+
+		// raindrop-fx 1.0.8 does not copy the image when blur steps are zero.
+		// Bypass its downsampling pass so clear rain retains the real background.
+		if (!glassEnabled) {
+			const renderer = fx.renderer as any;
+			renderer.blurRenderer.blur = (texture: any, _steps: number, output: any) => {
+				renderer.renderer.blit(texture, output);
+				return output;
+			};
+		}
 
 		await fx.start();
 
@@ -183,7 +199,7 @@ const dimOverlay = siteConfig.background.overlay;
 		const generation = {};
 		window.__rainEffectState = { root, generation };
 
-		bootRain(canvas, backgroundImage)
+		bootRain(canvas, backgroundImage, root.hasAttribute('data-drops-enabled'), root.hasAttribute('data-glass-enabled'))
 			.then((result) => {
 				const state = window.__rainEffectState;
 

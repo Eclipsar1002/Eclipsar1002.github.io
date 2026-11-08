@@ -4,6 +4,7 @@
     <p class="appearance-title">留一个舒服的亮度</p>
     <label for="background-brightness">背景明暗 <output data-brightness-value></output></label>
     <input id="background-brightness" data-brightness type="range" min="10" max="100" step="1" />
+    <label class="rain-toggle" for="background-glass">背景毛玻璃 <input id="background-glass" data-glass-toggle type="checkbox" /></label>
     <label class="rain-toggle" for="background-rain">背景雨滴 <input id="background-rain" data-rain-toggle type="checkbox" /></label>
     <label class="rain-toggle" for="rain-listening">听雨模式 <input id="rain-listening" data-rain-listening type="checkbox" /></label>
     <label for="rain-volume">雨声音量 <output data-rain-volume-value></output></label>
@@ -29,6 +30,7 @@
     if (!controls || !background || controls.dataset.bound) return;
     controls.dataset.bound = 'true';
     const brightness = controls.querySelector<HTMLInputElement>('[data-brightness]')!;
+    const glassToggle = controls.querySelector<HTMLInputElement>('[data-glass-toggle]')!;
     const rainToggle = controls.querySelector<HTMLInputElement>('[data-rain-toggle]')!;
     const rainListening = controls.querySelector<HTMLInputElement>('[data-rain-listening]')!;
     const rainVolume = controls.querySelector<HTMLInputElement>('[data-rain-volume]')!;
@@ -62,7 +64,7 @@
         return url.protocol === 'https:' || (url.protocol === 'http:' && url.origin === location.origin) ? url.href : '';
       } catch { return ''; }
     };
-    const saved = load<{ image?: string; brightness?: number; rainEnabled?: boolean } | null>('site.appearance', null);
+    const saved = load<{ image?: string; brightness?: number; rainEnabled?: boolean; glassEnabled?: boolean } | null>('site.appearance', null);
     // Older preferences also stored the default image when only brightness/rain changed.
     // Let those browsers follow the new device defaults, preserving custom images.
     const savedImage = safeImage(saved?.image);
@@ -73,23 +75,27 @@
       image: imageOverride || safeImage(defaults.image),
       brightness: Math.max(.1, Math.min(1, Number.isFinite(saved?.brightness) ? saved!.brightness! : defaults.brightness)),
       rainEnabled: saved?.rainEnabled ?? true,
+      glassEnabled: saved?.glassEnabled ?? saved?.rainEnabled ?? true,
     };
     function apply(persist = true) {
       background!.style.backgroundImage = `url(${JSON.stringify(state.image)})`;
-      background!.style.filter = `blur(${background!.dataset.defaultBlur || '0px'}) brightness(${state.brightness})`;
+      background!.style.filter = `blur(${state.glassEnabled ? background!.dataset.defaultBlur || '0px' : '0px'}) brightness(${state.brightness})`;
       const rain = document.querySelector<HTMLElement>('[data-rain-effect]');
       if (rain) {
         rain.dataset.backgroundResolved = 'true';
-        rain.style.filter = `blur(${background!.dataset.defaultBlur || '0px'}) brightness(${state.brightness})`;
-        if (safeImage(rain.dataset.backgroundImage) !== state.image || rain.hasAttribute('data-rain-enabled') !== state.rainEnabled) {
+        rain.style.filter = `blur(${state.glassEnabled ? background!.dataset.defaultBlur || '0px' : '0px'}) brightness(${state.brightness})`;
+        if (safeImage(rain.dataset.backgroundImage) !== state.image || rain.hasAttribute('data-rain-enabled') !== (state.rainEnabled || state.glassEnabled) || rain.hasAttribute('data-drops-enabled') !== state.rainEnabled || rain.hasAttribute('data-glass-enabled') !== state.glassEnabled) {
           rain.dataset.backgroundImage = state.image;
-          rain.toggleAttribute('data-rain-enabled', state.rainEnabled);
-          rain.hidden = !state.rainEnabled;
+          rain.toggleAttribute('data-rain-enabled', state.rainEnabled || state.glassEnabled);
+          rain.toggleAttribute('data-drops-enabled', state.rainEnabled);
+          rain.toggleAttribute('data-glass-enabled', state.glassEnabled);
+          rain.hidden = !(state.rainEnabled || state.glassEnabled);
           document.dispatchEvent(new Event('atlas:background-change'));
         }
       }
       brightness.value = String(Math.round(state.brightness * 100));
       rainToggle.checked = state.rainEnabled;
+      glassToggle.checked = state.glassEnabled;
       output.value = `${brightness.value}%`;
       if (persist) save('site.appearance', state);
     }
@@ -103,6 +109,11 @@
     };
     mobile.addEventListener('change', onScreenChange);
     document.addEventListener('astro:before-swap', () => mobile.removeEventListener('change', onScreenChange), { once: true });
+    glassToggle.addEventListener('change', () => {
+      state.glassEnabled = glassToggle.checked;
+      apply();
+      message.textContent = state.glassEnabled ? '背景毛玻璃已开启。' : '背景毛玻璃已关闭。';
+    });
     rainToggle.addEventListener('change', () => {
       state.rainEnabled = rainToggle.checked;
       apply();
@@ -146,7 +157,7 @@
       save('site.rain-volume', .4);
       save('site.appearance', null);
       imageOverride = '';
-      state = { image: safeImage(defaults.image), brightness: defaults.brightness, rainEnabled: true };
+      state = { image: safeImage(defaults.image), brightness: defaults.brightness, rainEnabled: true, glassEnabled: true };
       urlInput.value = defaults.image;
       apply(false);
       message.textContent = '已恢复网站默认背景和明暗。';
