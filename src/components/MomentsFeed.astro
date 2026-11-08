@@ -25,7 +25,7 @@ const dateFormat = new Intl.DateTimeFormat('zh-CN', {
           </a>
         </div>
         <div class="moment-card">
-          {entry.data.title && <h2 transition:name={momentTransitionName(entry.id)}><a href={momentUrl(entry.id)}>{entry.data.title}</a></h2>}
+          {entry.data.title && <h2 class="entry-transition-title" transition:name={momentTransitionName(entry.id)}><a href={momentUrl(entry.id)}>{entry.data.title}</a></h2>}
           <div class="prose-content"><Content /></div>
           {entry.data.images.length > 0 && (
             <div class:list={['moment-images', { 'single-image': entry.data.images.length === 1 }]}>
