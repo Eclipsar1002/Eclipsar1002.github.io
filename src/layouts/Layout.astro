@@ -1,7 +1,7 @@
 ---
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import { ClientRouter } from 'astro:transitions';
+import { ClientRouter, fade } from 'astro:transitions';
 import { getLocaleFromUrl, getSiteConfig, locales, localizePath } from '../config/site';
 import '../styles/global.css';
 import RainEffect from '../components/RainEffect.astro';
@@ -45,7 +45,7 @@ const backgroundImageStyle = [
 		<title>{pageTitle}</title>
 	</head>
 	<body class="min-h-screen bg-black text-white antialiased">
-		<div class="pointer-events-none fixed inset-0 z-0 overflow-hidden" transition:persist="site-background">
+		<div class="pointer-events-none fixed inset-0 z-0 overflow-hidden" transition:persist="site-background" transition:name="site-background" transition:animate="none">
 			<div data-site-background data-default-image={background.image} data-default-mobile-image={background.mobileImage} data-default-brightness={background.brightness} data-default-blur={background.blur} class="absolute inset-0 bg-cover bg-center bg-no-repeat" style={backgroundImageStyle}></div>
 
 
@@ -53,7 +53,7 @@ const backgroundImageStyle = [
 		</div>
 		<Header />
 		<AppearanceControls />
-		<main class="relative z-10" transition:name="page-content" transition:animate="slide">
+		<main class="relative z-10" transition:name="page-content" transition:animate={fade({ duration: '220ms' })}>
 			<slot />
 		</main>
 		<div class="relative z-10">

@@ -21,6 +21,6 @@ const posts = (await getCollection('blog'))
 ---
 
 <section class="mx-auto max-w-5xl px-5 py-20 md:py-28">
-	<SectionHeading kicker={kicker} title={title} description={description} />
+	<SectionHeading kicker={kicker} title={title} description={description} transitionName="section-title" />
 	<BlogList posts={posts} labels={labels} />
 </section>

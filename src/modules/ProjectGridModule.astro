@@ -24,7 +24,7 @@ const projects = (await getCollection('projects'))
 ---
 
 <section class:list={['mx-auto max-w-6xl px-5', largePadding ? 'py-20 md:py-28' : 'py-16']}>
-	<SectionHeading kicker={kicker} title={title} description={description} />
+	<SectionHeading kicker={kicker} title={title} description={description} transitionName={largePadding ? 'section-title' : undefined} />
 	<div class:list={['grid gap-4', columns === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3']}>
 		{projects.map((project) => <ProjectCard project={project} />)}
 	</div>
