@@ -39,9 +39,17 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
     <div class="mp-volume"><span data-vol-icon aria-hidden="true">♪</span><input class="mp-range" data-volume type="range" min="0" max="100" value="70" aria-label="音量" /></div>
   </div>
   <div class="mp-error" data-error hidden role="status"></div>
+  <div class="mp-lyrics" data-lyrics aria-label="滚动歌词"><p>播放音乐时显示歌词</p></div>
 </div>
 
 <style>
+  .mp-lyrics { position: absolute; top: calc(100% + 8px); left: 0; width: 100%; height: 72px; overflow-y: auto; scrollbar-width: none; text-align: center; mask-image: linear-gradient(transparent, black 20%, black 80%, transparent); color: #ffffff65; font-size: .75rem; line-height: 24px; }
+  .mp-lyrics::-webkit-scrollbar { display: none; }
+  .mp-lyrics :global(p) { margin: 0; padding: 0 .5rem; min-height: 24px; transition: color .2s; }
+  .mp-lyrics :global(p:first-child) { margin-top: 24px; }
+  .mp-lyrics :global(p:last-child) { margin-bottom: 24px; }
+  .mp-lyrics :global(.is-current) { color: #ffffffe0; }
+  @media (max-width: 767px) { .mp-lyrics { height: 48px; } }
   .music-player { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: .5rem .25rem; width: 100%; padding: 1.15rem 1rem; border: 1px solid #ffffff20; border-radius: 1.25rem; background: linear-gradient(135deg, #ffffff08, #ffffff02); backdrop-filter: blur(20px); color: #e4e4e7; }
   .mp-left { min-width: 0; padding-left: .25rem; }
   .mp-kicker { font-size: .58rem; letter-spacing: .15em; text-transform: uppercase; color: #a1a1aa; margin: 0 0 .85rem; }
@@ -88,6 +96,7 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
   import { load, save } from '../lib/storage';
   import { bindMusicVisualizer, unlockMusicVisualizer } from '../lib/audio-spectrum';
   import { bindMediaSession } from '../lib/media-session';
+  import { createLyrics } from '../lib/lyrics';
 
   const fmt = (t) => {
     if (!isFinite(t) || t < 0) t = 0;
@@ -104,6 +113,7 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
      ========================================================= */
 
   const createGlobalPlayer = () => {
+    const lyrics = createLyrics();
     const audio = new Audio();
     audio.crossOrigin = 'anonymous';
     audio.setAttribute('playsinline', '');
@@ -171,6 +181,7 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
 
     player.renderCurrent = () => {
       const track = player.tracks[player.idx];
+      void lyrics.update(track, () => audio.currentTime);
       player.mediaSession?.update(track);
       const ui = player.ui;
       if (!ui) return;
@@ -227,6 +238,7 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
     };
 
     player.renderPlayback = () => {
+      lyrics.render(audio.currentTime);
       const ui = player.ui;
 
       if (!ui) return;
