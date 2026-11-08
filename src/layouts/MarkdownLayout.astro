@@ -41,7 +41,7 @@ const formattedDate = date?.toLocaleDateString('zh-CN', {
 				{formattedStats && <span>{formattedStats.wordCount}</span>}
 				{formattedStats && <span>{formattedStats.readingTime}</span>}
 			</div>
-			<h1 class="mt-4 text-4xl font-semibold tracking-normal text-white md:text-6xl" transition:name={heroTransitionName}>{title}</h1>
+			<h1 class="mt-4 text-4xl font-semibold tracking-normal text-white md:text-6xl" transition:name={heroTransitionName} transition:animate="slide">{title}</h1>
 			<p class="mt-5 text-lg leading-8 text-zinc-400">{description}</p>
 			{tags.length > 0 && (
 				<div class="mt-6 flex flex-wrap gap-2">
