@@ -18,9 +18,11 @@ const timeSeparator = locale === 'zh' ? '：' : ':';
 
 <section class="mx-auto grid max-w-6xl gap-14 px-5 py-16 md:grid-cols-[0.85fr_1.15fr] md:items-center md:py-24 lg:gap-20">
 	<div class="order-2 md:order-1 md:pt-10">
+		<div class="home-music-area">
 		<RandomPoem />
 		<div class="mx-auto mt-8 max-w-md">
 			<MusicPlayer playlistId={siteConfig.music?.playlistId ?? ''} />
+		</div>
 		</div>
 		<div class="mx-auto mt-8 max-w-3xl rounded-lg border border-white/10 bg-white/[0.04] p-5 md:mx-0 md:p-6">
 			<div class="flex flex-wrap justify-center gap-3">
@@ -71,3 +73,9 @@ const timeSeparator = locale === 'zh' ? '：' : ':';
 </section>
 
 <HomeEnhancements locale={locale} today={siteConfig.today} />
+
+<style>
+	/* Keep the original layout footprint so links and surrounding content stay put. */
+	.home-music-area { position: relative; top: -2rem; }
+	@media (min-width: 768px) { .home-music-area { top: -4rem; } }
+</style>
