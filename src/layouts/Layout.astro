@@ -62,6 +62,26 @@ const backgroundImageStyle = [
 	</body>
 </html>
 
+<script>
+  import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from 'astro:transitions/client';
+
+  function isSectionList(url: URL) {
+    return /^\/(?:en\/)?(?:projects|blog|moments)\/?$/.test(url.pathname);
+  }
+
+  function useSectionSlide(event: TransitionBeforePreparationEvent | TransitionBeforeSwapEvent) {
+    return isSectionList(event.from) && isSectionList(event.to) &&
+      event.from.pathname.replace(/\/$/, '') !== event.to.pathname.replace(/\/$/, '');
+  }
+
+  document.addEventListener('astro:before-preparation', event => {
+    document.documentElement.toggleAttribute('data-entry-title-slide', useSectionSlide(event));
+  });
+  document.addEventListener('astro:before-swap', event => {
+    event.newDocument.documentElement.toggleAttribute('data-entry-title-slide', useSectionSlide(event));
+  });
+</script>
+
 <style>
   [data-site-background] { background-image: var(--desktop-background); }
   @media (max-width: 767px) {

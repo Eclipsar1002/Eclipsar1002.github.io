@@ -41,22 +41,22 @@ body {
 	view-transition-class: entry-title;
 }
 
-/* Only entering/leaving titles slide; matched list/detail titles keep their shared transition. */
-::view-transition-old(.entry-title):only-child {
+/* Section-to-section slides must not run during shared list/detail transitions. */
+html[data-entry-title-slide]::view-transition-old(.entry-title):only-child {
 	animation: astroFadeOut 420ms cubic-bezier(0.22, 1, 0.36, 1) both,
 		astroSlideToLeft 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-::view-transition-new(.entry-title):only-child {
+html[data-entry-title-slide]::view-transition-new(.entry-title):only-child {
 	animation: astroFadeIn 420ms cubic-bezier(0.22, 1, 0.36, 1) both,
 		astroSlideFromRight 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-html[data-astro-transition='back']::view-transition-old(.entry-title):only-child {
+html[data-entry-title-slide][data-astro-transition='back']::view-transition-old(.entry-title):only-child {
 	animation-name: astroFadeOut, astroSlideToRight;
 }
 
-html[data-astro-transition='back']::view-transition-new(.entry-title):only-child {
+html[data-entry-title-slide][data-astro-transition='back']::view-transition-new(.entry-title):only-child {
 	animation-name: astroFadeIn, astroSlideFromLeft;
 }
 
