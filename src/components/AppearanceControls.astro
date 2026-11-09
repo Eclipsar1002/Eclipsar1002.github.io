@@ -25,10 +25,15 @@
   import { rainAudioState, setRainAudio, setRainVolume } from '../lib/rain-audio';
 
   function mountAppearance() {
-    const controls = document.querySelector<HTMLElement>('[data-appearance-controls]');
+    const controls = document.querySelector<HTMLDetailsElement>('[data-appearance-controls]');
     const background = document.querySelector<HTMLElement>('[data-site-background]');
     if (!controls || !background || controls.dataset.bound) return;
     controls.dataset.bound = 'true';
+    const closeOutside = (event: PointerEvent) => {
+      if (controls.open && !event.composedPath().includes(controls)) controls.open = false;
+    };
+    document.addEventListener('pointerdown', closeOutside);
+    document.addEventListener('astro:before-swap', () => document.removeEventListener('pointerdown', closeOutside), { once: true });
     const brightness = controls.querySelector<HTMLInputElement>('[data-brightness]')!;
     const glassToggle = controls.querySelector<HTMLInputElement>('[data-glass-toggle]')!;
     const rainToggle = controls.querySelector<HTMLInputElement>('[data-rain-toggle]')!;
