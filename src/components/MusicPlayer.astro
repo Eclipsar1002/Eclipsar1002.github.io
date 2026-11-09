@@ -13,7 +13,10 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
       <button class="mp-quality-btn" data-quality-btn type="button" aria-label="切换音质"><span data-quality-label>标准</span><span aria-hidden="true"> ↗</span></button>
     </div>
     <label class="mp-playlist-label" for="home-playlist">网易云歌单 ID</label>
-    <input id="home-playlist" class="mp-playlist-input" data-playlist-input type="text" inputmode="numeric" placeholder="输入歌单 ID，回车切换" autocomplete="off" aria-label="网易云歌单 ID" />
+    <form data-playlist-form class="mp-playlist-form">
+      <input id="home-playlist" class="mp-playlist-input" data-playlist-input type="text" inputmode="numeric" enterkeyhint="done" placeholder="输入歌单 ID，完成后切换" autocomplete="off" aria-label="网易云歌单 ID" />
+      <button type="submit" class="mp-playlist-apply" aria-label="应用歌单 ID">应用</button>
+    </form>
     <div class="mp-meta" aria-live="polite">
       <div class="mp-title" data-title>正在寻找今天的声音…</div>
       <div class="mp-artist" data-artist>—</div>
@@ -55,6 +58,8 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
   .mp-playlist-label { display: block; margin: .9rem 0 .35rem; font-size: .62rem; color: #a1a1aa; letter-spacing: .03em; }
   .mp-playlist-input { display: block; width: 100%; min-width: 0; font: inherit; font-size: .72rem; border: 0; border-bottom: 1px solid #ffffff35; border-radius: 0; padding: .45rem 0; background: transparent; color: #f4f4f5; outline-offset: 4px; }
   .mp-playlist-input:focus { border-bottom-color: #ffffffa0; }
+  .mp-playlist-form { display: flex; align-items: center; gap: .4rem; }
+  .mp-playlist-apply { flex-shrink: 0; padding: .3rem .4rem; border: 1px solid #ffffff25; border-radius: .4rem; color: #d4d4d8; font-size: .65rem; cursor: pointer; }
   .mp-playlist-input::placeholder { color: #71717a; font-size: .65rem; }
   .mp-meta { margin-top: 1rem; min-height: 2.6rem; }
   .mp-title { font-size: .85rem; font-weight: 500; line-height: 1.5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -844,15 +849,9 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
        输入歌单 ID + Enter
        ------------------------- */
 
-    ui.playlistInput?.addEventListener(
-      'keydown',
-      async (e) => {
-        if (e.key !== 'Enter') {
-          return;
-        }
-
-        e.preventDefault();
-
+    let submittingPlaylist = false;
+    const submitPlaylist = async () => {
+        if (submittingPlaylist) return;
         const id =
           ui.playlistInput.value.trim();
 
@@ -872,19 +871,27 @@ const waveLines = Array.from({ length: 160 }, (_, index) => index * 360 / 160);
           return;
         }
 
+        if (id === player.playlistId) { ui.playlistInput.blur(); return; }
+        submittingPlaylist = true;
         ui.playlistInput.blur();
 
         /*
          * 只有用户主动输入新 ID 时，
          * 才真正换歌单。
          */
-        await player.loadPlaylist(
-          id,
-          {}
-        );
-        if (player.playlistId === id) save('music.customPlaylist', true);
-      }
-    );
+        try {
+          await player.loadPlaylist(id, {});
+          if (player.playlistId === id) save('music.customPlaylist', true);
+        } finally { submittingPlaylist = false; }
+    };
+    ui.playlistInput?.closest('form')?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      void submitPlaylist();
+    });
+    // The Done button on iOS numeric keyboards may emit blur without Enter/submit.
+    ui.playlistInput?.addEventListener('blur', () => {
+      if (ui.playlistInput.value.trim() && ui.playlistInput.value.trim() !== player.playlistId) void submitPlaylist();
+    });
 
     /* -------------------------
        进度条

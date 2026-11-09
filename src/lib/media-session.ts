@@ -25,10 +25,13 @@ export function bindMediaSession(audio: HTMLAudioElement, controls: {
     play: () => controls.play(), pause: () => audio.pause(),
     nexttrack: () => controls.next(), previoustrack: () => controls.previous(),
     seekto: (event) => { if (event.seekTime !== undefined) seek(event.seekTime); },
-    seekbackward: (event) => seek(audio.currentTime - (event.seekOffset ?? 10)),
-    seekforward: (event) => seek(audio.currentTime + (event.seekOffset ?? 10)),
     stop: () => { audio.pause(); seek(0); },
   };
+  // iOS can prefer skip-by-seconds buttons when both seek and track actions exist.
+  // Keep timeline seeking via seekto, and reserve the transport buttons for tracks.
+  for (const action of ['seekbackward', 'seekforward'] as const) {
+    try { session.setActionHandler(action, null); } catch { /* Unsupported action. */ }
+  }
   for (const [action, handler] of Object.entries(handlers)) {
     try { session.setActionHandler(action as MediaSessionAction, handler!); } catch { /* Unsupported action. */ }
   }
