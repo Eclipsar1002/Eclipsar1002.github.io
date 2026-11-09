@@ -1,0 +1,97 @@
+---
+import { getCollection } from 'astro:content';
+const entries = await getCollection('moments', ({data}) => !data.draft);
+const formatter = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Shanghai', year:'numeric', month:'2-digit', day:'2-digit'});
+const days = entries.map(entry => formatter.format(entry.data.pubDate));
+---
+<div class="moment-calendar" data-moment-calendar data-days={JSON.stringify(days)}>
+  <div class="calendar-top">
+    <span class="calendar-label">动态日历</span>
+    <div class="month-controls"><button type="button" data-month-prev aria-label="上个月">‹</button><span data-month-label aria-live="polite"></span><button type="button" data-month-next aria-label="下个月">›</button></div>
+  </div>
+  <div class="weekdays" aria-hidden="true">{['一','二','三','四','五','六','日'].map(day => <span>{day}</span>)}</div>
+  <div class="calendar-days" data-calendar-days></div>
+  <div class="calendar-bottom"><span data-calendar-status role="status">亮起的日期有动态</span><button type="button" data-calendar-all>查看全部</button></div>
+</div>
+
+<script>
+  function mountCalendars() {
+    document.querySelectorAll<HTMLElement>('[data-moment-calendar]').forEach(root => {
+      if (root.dataset.bound) return;
+      root.dataset.bound = 'true';
+      const counts = new Map<string,number>();
+      (JSON.parse(root.dataset.days || '[]') as string[]).forEach(day => counts.set(day, (counts.get(day)||0)+1));
+      const today = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+      let [year, month] = today.split('-').map(Number);
+      let selected = '';
+      const grid = root.querySelector<HTMLElement>('[data-calendar-days]')!;
+      const status = root.querySelector<HTMLElement>('[data-calendar-status]')!;
+      const empty = document.createElement('p');
+      empty.className = 'calendar-empty';
+      empty.hidden = true;
+      root.after(empty);
+      function filter(day: string) {
+        selected = day;
+        let visible = 0;
+        document.querySelectorAll<HTMLElement>('[data-moment-day]').forEach(entry => {
+          entry.hidden = !!day && entry.dataset.momentDay !== day;
+          if (!entry.hidden) visible++;
+        });
+        status.textContent = day ? `${day} · ${visible} 条动态` : '亮起的日期有动态';
+        empty.textContent = `${day} 没有动态，换一天看看吧。`;
+        empty.hidden = !day || visible > 0;
+        render();
+      }
+      function render() {
+        root.querySelector('[data-month-label]')!.textContent = `${year} 年 ${month} 月`;
+        grid.replaceChildren();
+        const offset = (new Date(year,month-1,1).getDay()+6)%7;
+        for(let i=0;i<offset;i++) grid.append(document.createElement('span'));
+        const total = new Date(year,month,0).getDate();
+        for(let day=1;day<=total;day++) {
+          const key = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.textContent = String(day);
+          button.dataset.day = key;
+          button.classList.toggle('has-moments', counts.has(key));
+          button.classList.toggle('is-today', key === today);
+          button.setAttribute('aria-pressed', String(selected===key));
+          button.setAttribute('aria-label', `${key}，${counts.get(key)||0} 条动态`);
+          button.addEventListener('click', () => filter(key));
+          grid.append(button);
+        }
+      }
+      function move(delta:number) {
+        const date = new Date(year,month-1+delta,1);
+        year=date.getFullYear(); month=date.getMonth()+1; render();
+      }
+      root.querySelector('[data-month-prev]')!.addEventListener('click',()=>move(-1));
+      root.querySelector('[data-month-next]')!.addEventListener('click',()=>move(1));
+      root.querySelector('[data-calendar-all]')!.addEventListener('click',()=>filter(''));
+      render();
+    });
+  }
+  mountCalendars();
+  document.addEventListener('astro:page-load',mountCalendars);
+</script>
+
+<style>
+  .moment-calendar { max-width: 27rem; margin: 0 0 2.5rem auto; padding: 1.25rem; border: 1px solid #ffffff20; border-radius: 1rem; background: #11111366; backdrop-filter: blur(14px); font-size: .8rem; }
+  .calendar-top,.month-controls,.calendar-bottom { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+  .calendar-label { color: #e4e4e7; }
+  .month-controls { color: #d4d4d8; }
+  button { cursor: pointer; }
+  .month-controls button { width: 2rem; height: 2rem; border-radius: .5rem; font-size: 1.2rem; }
+  .weekdays,.calendar-days { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); text-align: center; gap: .35rem; }
+  .weekdays { margin: .8rem 0 .5rem; color: #71717a; }
+  .calendar-days :global(button) { min-height: 2.4rem; border: 1px solid transparent; border-radius: .5rem; color: #71717a; }
+  .calendar-days :global(button.has-moments) { color: #fafafa; background: #ffffff10; font-weight: 600; box-shadow: inset 0 -2px #ffffff45; }
+  .calendar-days :global(button.is-today) { border-color: #ffffff30; }
+  .calendar-days :global(button[aria-pressed=true]) { background: #ffffff25; border-color: #ffffff80; color: white; }
+  .calendar-days :global(button:hover),.month-controls button:hover { background: #ffffff12; color: white; }
+  .calendar-bottom { margin-top: 1rem; color: #a1a1aa; font-size: .75rem; }
+  .calendar-bottom button { color: #d4d4d8; text-decoration: underline; text-underline-offset: .2rem; }
+  :global(.calendar-empty) { margin-bottom: 2rem; padding: 2rem 1rem; border: 1px dashed #ffffff25; border-radius: 1rem; text-align: center; color: #a1a1aa; }
+  @media(max-width: 480px) { .moment-calendar { max-width: none; } }
+</style>

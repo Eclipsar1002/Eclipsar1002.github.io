@@ -2,11 +2,25 @@
 import Layout from '../layouts/Layout.astro';
 import MomentsFeed from '../components/MomentsFeed.astro';
 import SectionHeading from '../components/SectionHeading.astro';
+import MomentsCalendar from '../components/MomentsCalendar.astro';
 ---
 
 <Layout title="个人动态" description="照片、日常碎片，还有偶尔想说的话。">
-  <section class="mx-auto max-w-3xl px-5 py-20 md:py-28">
+  <section class="mx-auto max-w-6xl px-5 py-20 md:py-28">
     <SectionHeading kicker="Life, in little pieces" title="个人动态" description="照片、日常碎片，还有偶尔想说的话。" transitionName="section-title" />
-    <MomentsFeed />
+    <div class="moments-layout">
+      <aside class="moments-calendar"><MomentsCalendar /></aside>
+      <div class="moments-entries"><MomentsFeed /></div>
+    </div>
   </section>
 </Layout>
+
+<style>
+  .moments-layout { display: grid; gap: 2rem; align-items: start; }
+  .moments-entries { min-width: 0; }
+  @media(min-width: 1024px) {
+    .moments-layout { grid-template-columns: minmax(0,1fr) 18rem; }
+    .moments-calendar { grid-column: 2; grid-row: 1; position: sticky; top: 6rem; }
+    .moments-entries { grid-column: 1; grid-row: 1; }
+  }
+</style>

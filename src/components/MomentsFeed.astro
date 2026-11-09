@@ -12,12 +12,13 @@ const entries = await Promise.all((limit ? moments.slice(0, limit) : moments).ma
 const dateFormat = new Intl.DateTimeFormat('zh-CN', {
   timeZone: 'Asia/Shanghai', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
 });
+const dayFormat = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' });
 ---
 
 {entries.length ? (
   <div class="moments-feed">
     {entries.map(({ entry, Content }) => (
-      <article class="moment" id={entry.id}>
+      <article class="moment" id={entry.id} data-moment-day={dayFormat.format(entry.data.pubDate)}>
         <div class="moment-date">
           <span class="moment-dot" aria-hidden="true"></span>
           <a href={momentUrl(entry.id)} aria-label="查看这条动态">
@@ -26,6 +27,7 @@ const dateFormat = new Intl.DateTimeFormat('zh-CN', {
         </div>
         <div class="moment-card">
           {entry.data.title && <h2 class="entry-transition-title" transition:name={momentTransitionName(entry.id)}><a href={momentUrl(entry.id)}>{entry.data.title}</a></h2>}
+          <div class="moment-body" id={`body-${entry.id}`} data-moment-body>
           <div class="prose-content"><Content /></div>
           {entry.data.images.length > 0 && (
             <div class:list={['moment-images', { 'single-image': entry.data.images.length === 1 }]}>
@@ -36,6 +38,8 @@ const dateFormat = new Intl.DateTimeFormat('zh-CN', {
               ))}
             </div>
           )}
+          </div>
+          <button class="moment-expand" type="button" data-moment-expand aria-controls={`body-${entry.id}`} aria-expanded="false" hidden>展开全文 ↓</button>
           {entry.data.tags.length > 0 && <div class="moment-tags">{entry.data.tags.map((tag) => <span>#{tag}</span>)}</div>}
         </div>
       </article>
@@ -75,4 +79,43 @@ const dateFormat = new Intl.DateTimeFormat('zh-CN', {
     .moment-images { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .single-image { grid-template-columns: minmax(0, 1fr); }
   }
+</style>
+
+<script>
+  function mountMomentFolds() {
+    document.querySelectorAll<HTMLElement>('.moment-card').forEach(card => {
+      if (card.dataset.foldBound) return;
+      card.dataset.foldBound = 'true';
+      const body = card.querySelector<HTMLElement>('[data-moment-body]')!;
+      const button = card.querySelector<HTMLButtonElement>('[data-moment-expand]')!;
+      let expanded = false;
+      const measure = () => {
+        if (!body.getClientRects().length) return;
+        body.classList.remove('is-collapsed');
+        const long = body.scrollHeight > 340;
+        button.hidden = !long;
+        body.classList.toggle('is-collapsed', long && !expanded);
+      };
+      button.addEventListener('click', () => {
+        expanded = !expanded;
+        button.setAttribute('aria-expanded', String(expanded));
+        button.textContent = expanded ? '收起 ↑' : '展开全文 ↓';
+        measure();
+        if (!expanded && card.getBoundingClientRect().top < 80) card.scrollIntoView({ block: 'start', behavior: 'instant' });
+      });
+      const observer = new ResizeObserver(measure);
+      [...body.children].forEach(child => observer.observe(child));
+      measure();
+      document.addEventListener('astro:before-swap', () => observer.disconnect(), { once: true });
+    });
+  }
+  mountMomentFolds();
+  document.addEventListener('astro:page-load', mountMomentFolds);
+</script>
+
+<style>
+  .moment-body.is-collapsed { max-height: 19rem; overflow: hidden; mask-image: linear-gradient(#000 75%, transparent); }
+  .moment-expand { margin-top: 1rem; padding: .4rem .75rem; border: 1px solid #ffffff20; border-radius: 999px; color: #d4d4d8; font-size: .8rem; background: #ffffff06; cursor: pointer; }
+  .moment-expand:hover { background: #ffffff12; color: white; }
+  .moment-card { scroll-margin-top: 7rem; }
 </style>

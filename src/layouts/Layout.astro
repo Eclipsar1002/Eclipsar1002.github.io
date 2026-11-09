@@ -75,6 +75,7 @@ const backgroundImageStyle = [
   }
 
   let returningTitle = '';
+  let sharedTitleStyle = '';
   document.addEventListener('astro:before-preparation', event => {
     document.documentElement.toggleAttribute('data-entry-title-slide', useSectionSlide(event));
     const detail = event.from.pathname.match(/^(\/(?:en\/)?(?:projects|blog))\/.+/);
@@ -82,9 +83,31 @@ const backgroundImageStyle = [
     returningTitle = detail && heading && event.to.pathname.replace(/\/$/, '') === detail[1]
       ? getComputedStyle(heading).viewTransitionName
       : '';
+    const targetLink = event.sourceElement?.closest('a');
+    const sourceTitle = returningTitle ? heading : targetLink?.querySelector('.entry-transition-title') || targetLink?.closest('.entry-transition-title');
+    const name = sourceTitle ? getComputedStyle(sourceTitle).viewTransitionName : '';
+    sharedTitleStyle = '';
+    if (name && name !== 'none' && !useSectionSlide(event)) {
+      // Give the moving title its own layer above the fading page, including browsers
+      // that implement named view transitions but not view-transition-class yet.
+      const escaped = CSS.escape(name);
+      sharedTitleStyle = `::view-transition-group(${escaped}){z-index:100;animation-duration:420ms;animation-timing-function:cubic-bezier(.22,1,.36,1)}::view-transition-old(${escaped}),::view-transition-new(${escaped}){animation-duration:420ms}`;
+      let style = document.querySelector<HTMLStyleElement>('#shared-title-motion');
+      if (!style) { style = document.createElement('style'); style.id = 'shared-title-motion'; document.head.append(style); }
+      style.textContent = sharedTitleStyle;
+      if (returningTitle && sourceTitle) {
+        const bounds = sourceTitle.getBoundingClientRect();
+        if (bounds.bottom < 80 || bounds.top > innerHeight) sourceTitle.scrollIntoView({behavior:'instant',block:'center'});
+      }
+    }
   });
   document.addEventListener('astro:before-swap', event => {
     event.newDocument.documentElement.toggleAttribute('data-entry-title-slide', useSectionSlide(event));
+    if (sharedTitleStyle) {
+      const style = event.newDocument.createElement('style');
+      style.id = 'shared-title-motion'; style.textContent = sharedTitleStyle;
+      event.newDocument.head.append(style);
+    }
   });
   document.addEventListener('astro:after-swap', () => {
     if (!returningTitle) return;
