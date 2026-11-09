@@ -74,11 +74,30 @@ const backgroundImageStyle = [
       event.from.pathname.replace(/\/$/, '') !== event.to.pathname.replace(/\/$/, '');
   }
 
+  let returningTitle = '';
   document.addEventListener('astro:before-preparation', event => {
     document.documentElement.toggleAttribute('data-entry-title-slide', useSectionSlide(event));
+    const detail = event.from.pathname.match(/^(\/(?:en\/)?(?:projects|blog))\/.+/);
+    const heading = document.querySelector('main h1');
+    returningTitle = detail && heading && event.to.pathname.replace(/\/$/, '') === detail[1]
+      ? getComputedStyle(heading).viewTransitionName
+      : '';
   });
   document.addEventListener('astro:before-swap', event => {
     event.newDocument.documentElement.toggleAttribute('data-entry-title-slide', useSectionSlide(event));
+  });
+  document.addEventListener('astro:after-swap', () => {
+    if (!returningTitle) return;
+    const title = [...document.querySelectorAll<HTMLElement>('.entry-transition-title')]
+      .find(element => getComputedStyle(element).viewTransitionName === returningTitle);
+    returningTitle = '';
+    if (!title) return;
+    const bounds = title.getBoundingClientRect();
+    const headerBottom = document.querySelector('body > header')?.getBoundingClientRect().bottom || 0;
+    if (bounds.top < headerBottom + 16 || bounds.bottom > window.innerHeight - 24) {
+      // Set the destination before the new view snapshot, rather than scrolling after the animation.
+      title.scrollIntoView({ behavior: 'instant', block: 'center' });
+    }
   });
 </script>
 
