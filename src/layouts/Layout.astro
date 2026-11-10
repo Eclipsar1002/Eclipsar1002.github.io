@@ -6,6 +6,7 @@ import { getLocaleFromUrl, getSiteConfig, locales, localizePath } from '../confi
 import '../styles/global.css';
 import RainEffect from '../components/RainEffect.astro';
 import AppearanceControls from '../components/AppearanceControls.astro';
+import ImageLightbox from '../components/ImageLightbox.astro';
 interface Props {
 	title?: string;
 	description?: string;
@@ -53,6 +54,7 @@ const backgroundImageStyle = [
 		</div>
 		<Header />
 		<AppearanceControls />
+		<ImageLightbox />
 		<main class="relative z-10" transition:name="page-content" transition:animate={fade({ duration: '220ms' })}>
 			<slot />
 		</main>

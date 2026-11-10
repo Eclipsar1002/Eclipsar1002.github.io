@@ -32,7 +32,7 @@ const formattedDate = date?.toLocaleDateString('zh-CN', {
 ---
 
 <Layout title={title} description={description}>
-	<article class="mx-auto max-w-3xl px-5 py-16 md:py-24">
+	<article data-lightbox-gallery class="mx-auto max-w-3xl px-5 py-16 md:py-24">
 		<a href={backHref || localizePath(locale, Astro.url.pathname.includes('/blog') ? '/blog' : '/projects')} class="text-sm text-zinc-500 transition hover:text-white">
 			{siteConfig.ui.backToList}
 		</a>

@@ -18,7 +18,7 @@ const dayFormat = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', 
 {entries.length ? (
   <div class="moments-feed">
     {entries.map(({ entry, Content }) => (
-      <article class="moment" id={entry.id} data-moment-day={dayFormat.format(entry.data.pubDate)}>
+      <article data-lightbox-gallery class="moment" id={entry.id} data-moment-day={dayFormat.format(entry.data.pubDate)}>
         <div class="moment-date">
           <span class="moment-dot" aria-hidden="true"></span>
           <a href={momentUrl(entry.id)} aria-label="查看这条动态">
