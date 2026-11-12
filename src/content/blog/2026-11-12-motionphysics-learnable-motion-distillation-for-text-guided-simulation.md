@@ -65,7 +65,7 @@ $$\theta_{\mathrm{ini}}={\text{材料类别 }c,\ \text{密度 }\rho,\ \text{材�
 
 其中 $\bar M$ 是 EMA 目标网络，$\beta=10^{-3}$。
 
-$$L=\sum_i\left\[\sqrt{(M(z_0)_i-\bar M(\hat z_0)_i)^2+\beta^2}-\beta\right]$$
+$$L=\sum_i\left\[\sqrt{\left(\left(M(z_0)\right)_i-\left(\bar M(\hat z_0)\right)_i\right)^2+\beta^2}-\beta\right]$$
 
 这里的关键设计是：
 
@@ -103,30 +103,6 @@ $$\frac{\partial L}{\partial\theta}=\frac{\partial L}{\partial I}\frac{\partial 
 
 物理参数更新还包括梯度归一化、对数空间更新和范围限制，对应 \[update_grad.py (line 26)]。
 
-当前材料参数
 
-\    ↓
-
-物理仿真
-
-\    ↓
-
-扰动后的训练渲染
-
-\    ↓
-
-视频编码、加噪声、文本条件去噪
-
-\    ↓
-
-LMD 特征损失
-
-\    ↓
-
-更新运动提取器＋材料参数
-
-\    ↓
-
-重新从初始状态仿真
 
 ![截图](/uploads/screenshot-1794491732490-60700203-0c64-4cff-84dc-721cbc333902.png)
