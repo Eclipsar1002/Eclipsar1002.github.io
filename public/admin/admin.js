@@ -1,3 +1,5 @@
+import { registerPasteImages } from './paste-images.js';
+
 const status = document.getElementById('admin-status');
 const message = document.getElementById('admin-message');
 
@@ -26,6 +28,7 @@ async function boot() {
     script.onerror = () => reject(new Error('编辑器加载失败，请检查网络后刷新'));
     document.head.append(script);
   });
+  registerPasteImages(window.CMS);
   window.CMS.init({ config: { backend: { base_url: authUrl.origin } } });
   status.hidden = true;
 }
