@@ -67,11 +67,66 @@ $$\theta_{\mathrm{ini}}={\text{材料类别 }c,\ \text{密度 }\rho,\ \text{材�
 
 $$L=\sum_i\left\[\sqrt{(M(z_0)_i-\bar M(\hat z_0)_i)^2+\beta^2}-\beta\right]$$
 
-# 配置
+这里的关键设计是：
 
-> MotionPhysics/config/MotionPhysics/test_telephone_config.json
+* 当前仿真分支保留梯度。
+* 去噪目标分支停止梯度。
+* 视频大模型被冻结。
+* 小型特征网络和材料参数参与更新。
 
-1. prompt
-2. material:jelly 弹性
-3. E nu 刚度和泊松比的初值
-4.
+#### 5. 扰动外观和几何，让监督更关注运动
+
+![截图](/uploads/screenshot-1794490737815-dbfa0b12-8575-475f-9904-86cf93f3a096.png)
+
+#### 6. 整个方法怎么实际优化材料参数
+
+完整梯度链是：
+
+$$\frac{\partial L}{\partial\theta}=\frac{\partial L}{\partial I}\frac{\partial I}{\partial G}\frac{\partial G}{\partial\theta}$$
+
+分别表示：
+
+1. 视频应该怎样变，损失才会降低。
+2. 三维高斯状态应该怎样变，才能使视频这样变化。
+3. 材料参数应该怎样变，才能产生这样的三维运动。
+
+代码中分两部分完成：
+
+接着执行两类更新：
+
+* 用 AdamW 更新小型 
+
+  `SpatialHead`
+
+  。
+* 用单独的参数更新函数修改 E、nu 等物理系数。
+
+物理参数更新还包括梯度归一化、对数空间更新和范围限制，对应 \[update_grad.py (line 26)]。
+
+当前材料参数
+
+\    ↓
+
+物理仿真
+
+\    ↓
+
+扰动后的训练渲染
+
+\    ↓
+
+视频编码、加噪声、文本条件去噪
+
+\    ↓
+
+LMD 特征损失
+
+\    ↓
+
+更新运动提取器＋材料参数
+
+\    ↓
+
+重新从初始状态仿真
+
+![截图](/uploads/screenshot-1794491732490-60700203-0c64-4cff-84dc-721cbc333902.png)
