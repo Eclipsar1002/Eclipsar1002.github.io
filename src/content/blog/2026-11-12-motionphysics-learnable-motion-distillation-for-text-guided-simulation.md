@@ -65,8 +65,6 @@ $$\theta_{\mathrm{ini}}={\text{材料类别 }c,\ \text{密度 }\rho,\ \text{材�
 
 其中 $\bar M$ 是 EMA 目标网络，$\beta=10^{-3}$。
 
-$$L=\sum_i\left\[\sqrt{\left(\left(M(z_0)\right)_i-\left(\bar M(\hat z_0)\right)_i\right)^2+\beta^2}-\beta\right]$$
-
 这里的关键设计是：
 
 * 当前仿真分支保留梯度。
@@ -94,11 +92,7 @@ $$\frac{\partial L}{\partial\theta}=\frac{\partial L}{\partial I}\frac{\partial 
 
 接着执行两类更新：
 
-* 用 AdamW 更新小型 
-
-  `SpatialHead`
-
-  。
+* 用 AdamW 更新小型 `SpatialHead`。
 * 用单独的参数更新函数修改 E、nu 等物理系数。
 
 物理参数更新还包括梯度归一化、对数空间更新和范围限制，对应 \[update_grad.py (line 26)]。
