@@ -1,8 +1,11 @@
 ---
-title: "设计工程师如何缩短产品反馈循环"
-description: "从原型、组件到发布，设计工程师可以把模糊想法快速变成可验证的产品体验。"
+title: 设计工程师如何缩短产品反馈循环
+description: 从原型、组件到发布，设计工程师可以把模糊想法快速变成可验证的产品体验。
 pubDate: 2026-05-20
-tags: ["Design Engineering", "Product", "Workflow"]
+tags:
+  - Design Engineering
+  - Product
+  - Workflow
 ---
 
 设计工程不是把设计稿翻译成代码，而是在产品仍然不确定时，用足够真实的界面帮助团队做判断。
