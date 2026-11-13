@@ -34,7 +34,7 @@ export function registerWritingEditor(CMS) {
   class WritingControl extends base.control {
     constructor(props) {
       super(props);
-      this.state = { ...this.state, layout: 'split', documents: [], drafts: [], previewValue: props.value || '', active: 0 };
+      this.state = { ...this.state, documents: [], drafts: [], active: 0 };
     }
     componentDidMount() {
       super.componentDidMount();
@@ -64,12 +64,10 @@ export function registerWritingEditor(CMS) {
       }
     }
     componentDidUpdate(previous) {
-      if (previous.value !== this.props.value && this.props.value !== this.state.editorValue) {
-        this.setState({ editorValue: this.props.value || '', previewValue: this.props.value || '' });
-      }
+      if (previous.value !== this.props.value && this.props.value !== this.state.editorValue)
+        this.setState({ editorValue: this.props.value || '' });
     }
     componentWillUnmount() {
-      clearTimeout(this.previewTimer);
       this.unsubscribeDrafts?.();
       setDraftFolderReader(null);
       window.removeEventListener('atlas:draft-error', this.draftError);
@@ -80,37 +78,73 @@ export function registerWritingEditor(CMS) {
       catch (error) { this.setState({ draftMessage: error.message }); }
     };
     value = () => this.state.editorValue ?? this.props.value ?? '';
-    focus() { if (this.state.layout === 'original') super.focus(); else this.input?.focus(); }
+    focus() { super.focus(); }
     change = value => {
       this.handleBodyChange(value);
-      // Parse the preview after typing settles instead of on each keystroke.
-      clearTimeout(this.previewTimer);
-      this.previewTimer = setTimeout(() => {
-        if (this.alive) this.setState({ previewValue: this.value() });
-      }, 180);
     };
-    insert = (text, replace = this.queryRange) => {
-      const input = this.input;
-      const start = replace?.start ?? input?.selectionStart ?? this.value().length;
-      const end = replace?.end ?? input?.selectionEnd ?? start;
-      const value = this.value();
-      this.change(value.slice(0, start) + text + value.slice(end));
-      this.queryRange = null;
+    rememberCaret = () => {
+      const target = this.editorTarget();
+      const selection = window.getSelection();
+      if (target instanceof HTMLTextAreaElement && document.activeElement === target)
+        this.caret = { target, start: target.selectionStart, end: target.selectionEnd };
+      else if (target && selection?.rangeCount && target.contains(selection.anchorNode))
+        this.caret = { target, range: selection.getRangeAt(0).cloneRange() };
+    };
+    insert = text => {
+      const caret = this.caret;
+      const target = caret?.target;
+      if (target?.isConnected) {
+        target.focus({ preventScroll: true });
+        if (target instanceof HTMLTextAreaElement) {
+          const start = caret.start - (this.queryLength || 0);
+          this.change(target.value.slice(0, start) + text + target.value.slice(caret.end));
+        } else if (caret.range && target.contains(caret.range.startContainer)) {
+          const range = caret.range.cloneRange();
+          if (this.queryLength) {
+            const prefix = range.cloneRange(); prefix.selectNodeContents(target);
+            prefix.setEnd(range.endContainer, range.endOffset);
+            let offset = (prefix.cloneContents().textContent || '').length - this.queryLength;
+            const walker = document.createTreeWalker(target, NodeFilter.SHOW_TEXT);
+            let node;
+            while ((node = walker.nextNode())) {
+              if (offset <= node.length) { range.setStart(node, Math.max(0, offset)); break; }
+              offset -= node.length;
+            }
+          }
+          const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
+          const marker = `PASTEIMAGE${crypto.randomUUID().replaceAll('-', '')}`;
+          this.imageMarkers ||= new Map(); this.imageMarkers.set(marker, text);
+          const clipboardData = new DataTransfer(); clipboardData.setData('text/plain', marker);
+          target.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData }));
+        }
+      } else {
+        // No caret yet (for example an empty document): use the native value
+        // update and remount once so Slate reads the external insertion.
+        this.change(this.value() + text);
+        this.setState(state => ({ pasteRevision: (state.pasteRevision || 0) + 1 }));
+      }
+      this.queryLength = 0;
       this.setState({ menu: null, query: '', active: 0 });
-      requestAnimationFrame(() => {
-        this.input?.focus();
-        this.input?.setSelectionRange(start + text.length, start + text.length);
-      });
     };
+    editorTarget = () => this.pasteRoot?.querySelector('textarea, [contenteditable="true"]');
     detectMenu = () => {
-      const input = this.input;
-      const before = input.value.slice(0, input.selectionStart);
+      const input = this.editorTarget();
+      if (!input) return;
+      this.rememberCaret();
+      let before;
+      if (input instanceof HTMLTextAreaElement) before = input.value.slice(0, input.selectionStart);
+      else {
+        const range = this.caret?.range;
+        if (!range || !input.contains(range.startContainer)) return;
+        const prefix = range.cloneRange(); prefix.selectNodeContents(input); prefix.setEnd(range.endContainer, range.endOffset);
+        before = prefix.toString();
+      }
       const reference = before.match(/\[\[([^\]\n]{0,100})$/);
       const slash = before.match(/(?:^|\n)\/([^\n]{0,30})$/);
       const match = reference || slash;
-      if (!match) { if (this.state.menu) this.setState({ menu: null }); this.queryRange = null; return; }
+      if (!match) { this.queryLength = 0; return; }
       const length = reference ? match[0].length : match[1].length + 1;
-      this.queryRange = { start: input.selectionStart - length, end: input.selectionStart };
+      this.queryLength = length;
       this.setState({ menu: reference ? 'reference' : 'slash', query: match[1], active: 0 });
     };
     allDocuments = () => {
@@ -127,7 +161,7 @@ export function registerWritingEditor(CMS) {
     run = command => {
       if (command.id === 'reference') { this.setState({ menu: 'reference', query: '', active: 0 }); return; }
       if (command.id === 'image' || command.id === 'pdf') {
-        if (this.queryRange) this.insert('');
+        if (this.queryLength) this.insert('');
         this.fileKind = command.id;
         this.fileInput.accept = command.id === 'pdf' ? 'application/pdf' : 'image/png,image/jpeg,image/webp,image/gif';
         this.fileInput.click(); return;
@@ -150,7 +184,6 @@ export function registerWritingEditor(CMS) {
     restore = async draft => {
       try {
         await restoreDraft(draft, this);
-        this.setState({ previewValue: draft.data.body || '' });
       } catch (error) { this.setState({ draftMessage: error.message }); }
     };
     openDraft = async draft => {
@@ -170,8 +203,10 @@ export function registerWritingEditor(CMS) {
       event.target.value = '';
       if (!file) return;
       if (this.fileKind === 'image') {
-        return this.uploadImages({ files: [file], target: this.input, range: null,
-          caret: [this.input.selectionStart, this.input.selectionEnd], uploaded: [] });
+        const target = this.editorTarget();
+        const range = target?.isContentEditable ? this.caret?.range?.cloneRange() : null;
+        const caret = target instanceof HTMLTextAreaElement ? [this.caret?.start || 0, this.caret?.end || 0] : null;
+        return this.uploadImages({ files: [file], target, range, caret, uploaded: [] });
       }
       try {
         if (file.type !== 'application/pdf' || file.size > 10 * 1024 * 1024) throw new Error('请选择不超过 10 MB 的 PDF。');
@@ -184,26 +219,41 @@ export function registerWritingEditor(CMS) {
         this.insert(`\n\n[${file.name.replace(/[\[\]]/g, '')}](${url})\n\n`);
       } catch (error) { this.setState({ pasteMessage: error.message }); }
     };
+    jumpToHeading = heading => {
+      const target = this.editorTarget();
+      if (!target) return;
+      const headings = [...target.querySelectorAll('h1, h2, h3, h4, h5, h6')];
+      let element = headings.find(node => node.textContent.trim() === heading.text);
+      if (!element) element = [...target.querySelectorAll('[data-slate-node="element"]')]
+        .find(node => node.textContent.replace(/^#{1,6}\s+/, '').trim() === heading.text);
+      if (element) {
+        element.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        target.focus({ preventScroll: true });
+        const range = document.createRange(); range.selectNodeContents(element); range.collapse(true);
+        const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
+      }
+    };
     render() {
-      if (this.state.layout === 'original') return h('div', { className: 'writing-editor' },
-        h('button', { type: 'button', onClick: () => this.setState({ layout: 'split' }) }, '← 返回增强写作面板'), super.render());
       const value = this.value();
       const headings = getOutline(value);
       const results = this.state.menu ? this.matching() : [];
-      const button = (label, action, props = {}) => h('button', { type: 'button', onMouseDown: event => event.preventDefault(), onClick: action, ...props }, label);
-      let preview;
-      try { preview = renderMarkdown(this.state.previewValue, this.allDocuments(), path => this.imagePreviews?.get(path) || this.props.getAsset?.(path)); }
-      catch { preview = '<p>预览暂时无法渲染，请检查正文语法。</p>'; }
+      const button = (label, action, props = {}) => h('button', { type: 'button', className: 'writing-action', onMouseDown: event => { this.rememberCaret(); event.preventDefault(); }, onClick: action, ...props }, label);
       return h('section', { className: 'writing-editor', ref: element => { this.pasteRoot = element; },
-        onPasteCapture: this.handleImagePaste },
-        h('div', { className: 'writing-toolbar', role: 'toolbar', 'aria-label': '正文工具' },
-          ...['line', 'table', 'math', 'image', 'pdf', 'reference'].map(id => {
-            const command = commands.find(item => item.id === id);
-            return button(command.label, () => this.run(command), { key: id });
-          }),
+        onPasteCapture: this.handleImagePaste,
+        onMouseUpCapture: () => this.rememberCaret(),
+        onKeyUpCapture: event => { if (event.target.closest?.('[contenteditable="true"], textarea') && !['Escape', 'Enter', 'ArrowDown', 'ArrowUp', 'Shift'].includes(event.key)) this.detectMenu(); },
+        onKeyDownCapture: event => {
+          if (this.state.menu && event.key === 'Escape') { event.preventDefault(); this.queryLength = 0; this.setState({ menu: null }); }
+          else if (this.state.menu && ['ArrowDown', 'ArrowUp'].includes(event.key)) {
+            const count = Math.max(results.length, 1);
+            event.preventDefault(); this.setState({ active: (this.state.active + (event.key === 'ArrowDown' ? 1 : -1) + count) % count });
+          } else if (this.state.menu && event.key === 'Enter' && results.length) { event.preventDefault(); this.select(results[this.state.active]); }
+          else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') { event.preventDefault(); saveCurrentDraft().catch(error => this.setState({ draftMessage: error.message })); }
+        } },
+        h('div', { className: 'writing-tools', role: 'toolbar', 'aria-label': '写作工具' },
+          button('插入', () => { this.queryLength = 0; this.setState({ menu: 'slash', query: '', active: 0 }); }),
+          button('文档引用', () => { this.queryLength = 0; this.setState({ menu: 'reference', query: '', active: 0 }); }),
           button('草稿箱', () => this.setState({ draftsOpen: !this.state.draftsOpen })),
-          h('select', { 'aria-label': '编辑显示模式', value: this.state.layout, onChange: event => this.setState({ layout: event.target.value }) },
-            ...[['split', '分屏'], ['write', '写作'], ['preview', '预览'], ['original', '原编辑器']].map(([value, label]) => h('option', { value }, label))),
           h('input', { type: 'file', hidden: true, ref: element => { this.fileInput = element; }, onChange: this.fileSelected })),
         this.state.recoverable && h('div', { className: 'writing-notice' },
           '发现未发布草稿（', new Date(this.state.recoverable.updatedAt).toLocaleString(), '）。',
@@ -216,9 +266,9 @@ export function registerWritingEditor(CMS) {
             button('删除本地草稿', () => { if (confirm('只删除这份本地草稿？已发布文档不受影响。')) deleteDraft(draft.key).catch(error => this.setState({ draftMessage: error.message })); })))),
         this.state.menu && h('div', { className: 'writing-menu', role: 'dialog', 'aria-label': this.state.menu === 'slash' ? '快捷插入' : '引用搜索' },
           h('div', { className: 'writing-menu-search' },
-            h('input', { 'aria-label': this.state.menu === 'slash' ? '搜索插入项' : '搜索引用文档', placeholder: '搜索…', value: this.state.query || '',
+            h('input', { autoFocus: true, 'aria-label': this.state.menu === 'slash' ? '搜索插入项' : '搜索引用文档', placeholder: '搜索…', value: this.state.query || '',
               onChange: event => this.setState({ query: event.target.value, active: 0 }) }),
-            button('关闭', () => { this.queryRange = null; this.setState({ menu: null }); })),
+            button('关闭', () => { this.queryLength = 0; this.setState({ menu: null }); })),
           ...results.map((item, index) => button(this.state.menu === 'slash' ? item.label : `${item.title} · ${item.id}${item.draft ? '（待发布草稿）' : ''}`,
             () => this.select(item), { key: item.id, className: index === this.state.active ? 'is-active' : '' })),
           this.state.menu === 'reference' && h('div', { className: 'writing-reference-create' },
@@ -226,45 +276,32 @@ export function registerWritingEditor(CMS) {
             button(`新建“${this.state.query || '输入标题'}”文档草稿并引用`, this.createReference),
             h('p', null, this.state.referenceError || '引用目标发布后，网站上的链接才可访问。')),
           this.state.menu === 'slash' && !results.length && h('p', null, '没有匹配的插入项。')),
-        h('div', { className: `writing-workspace layout-${this.state.layout}` },
-          this.state.layout !== 'preview' && h('textarea', {
-            ref: element => { this.input = element; }, className: 'writing-source', 'aria-label': 'Markdown 正文',
-            placeholder: '开始写作… 输入 / 插入内容，输入 [[ 搜索文档，Ctrl+V 粘贴截图。',
-            value, disabled: this.props.isDisabled || this.uploading, spellCheck: false,
-            onChange: event => { this.change(event.target.value); this.detectMenu(); },
-            onKeyDown: event => {
-              if (this.state.menu && event.key === 'Escape') { event.preventDefault(); this.queryRange = null; this.setState({ menu: null }); }
-              else if (this.state.menu && ['ArrowDown', 'ArrowUp'].includes(event.key)) {
-                event.preventDefault(); this.setState({ active: (this.state.active + (event.key === 'ArrowDown' ? 1 : -1) + Math.max(results.length, 1)) % Math.max(results.length, 1) });
-              } else if (this.state.menu && event.key === 'Enter' && results.length) { event.preventDefault(); this.select(results[this.state.active]); }
-              else if ((event.ctrlKey || event.metaKey) && event.key === 's') { event.preventDefault(); saveCurrentDraft().catch(error => this.setState({ draftMessage: error.message })); }
-              else if (event.key === 'Tab') { event.preventDefault(); this.insert('  ', { start: this.input.selectionStart, end: this.input.selectionEnd }); }
-            },
-            onPaste: event => {
-              if (event.nativeEvent.isTrusted) return;
-              event.preventDefault();
-              const input = event.target;
-              const start = input.selectionStart;
-              const text = event.clipboardData.getData('text/plain');
-              const next = input.value.slice(0, start) + text + input.value.slice(input.selectionEnd);
-              this.change(next);
-            },
-          }),
-          this.state.layout !== 'write' && h('div', { className: 'writing-preview prose-content', 'aria-label': '正文即时预览',
-            dangerouslySetInnerHTML: { __html: preview } }),
-          headings.length > 1 && h('nav', { className: 'writing-outline', 'aria-label': '文档目录' }, h('strong', null, '目录'),
-            ...headings.map((heading, i) => button(heading.text, () => {
-              this.setState({ layout: this.state.layout === 'preview' ? 'split' : this.state.layout });
-              requestAnimationFrame(() => { this.input?.focus(); this.input?.setSelectionRange(heading.offset, heading.offset); if (this.input) this.input.scrollTop = value.slice(0, heading.offset).split('\n').length * 24 - 60; });
-            }, { key: i, style: { paddingLeft: `${Math.max(0, heading.depth - 2) * 10 + 8}px` } })))),
+        h('div', { className: 'writing-native-layout' },
+          h('div', { className: 'writing-native-control' }, super.render()),
+          headings.length > 0 && h('nav', { className: 'writing-outline', 'aria-label': '文档目录' }, h('strong', null, '目录'),
+            ...headings.map((heading, i) => button(heading.text, () => this.jumpToHeading(heading),
+              { key: i, style: { paddingLeft: `${Math.max(0, heading.depth - 2) * 8}px` } })))),
         h('div', { className: 'writing-status', role: 'status', 'aria-live': 'polite' },
-          this.state.pasteMessage || this.state.draftMessage || '正文支持 Markdown、表格和 LaTeX。草稿只保存在本浏览器。',
+          this.state.pasteMessage || this.state.draftMessage || '',
           this.state.pasteFailed && button('重试插入', () => this.uploadImages(this.state.pasteFailed))),
-        h('small', { className: 'writing-hint' }, '独立一行 --- 是分割线；输入 / 或 [[ 打开菜单。图片及文档只有点击“发布”后才会上传并公开。'));
+        this.state.menu && h('div', { className: 'writing-menu', role: 'dialog', 'aria-label': this.state.menu === 'slash' ? '快捷插入' : '引用搜索',
+          onKeyDown: event => { if (event.key === 'Escape') { event.preventDefault(); this.setState({ menu: null }); } } },
+          h('div', { className: 'writing-menu-search' },
+            h('input', { autoFocus: true, 'aria-label': this.state.menu === 'slash' ? '搜索插入项' : '搜索引用文档', placeholder: '搜索…', value: this.state.query || '',
+              onChange: event => this.setState({ query: event.target.value, active: 0 }) }),
+            button('关闭', () => { this.queryLength = 0; this.setState({ menu: null }); })),
+          ...results.map((item, index) => button(this.state.menu === 'slash' ? item.label : `${item.title} · ${item.id}${item.draft ? '（待发布草稿）' : ''}`,
+            () => this.select(item), { key: item.id, className: index === this.state.active ? 'is-active' : '' })),
+          this.state.menu === 'reference' && h('div', { className: 'writing-reference-create' },
+            h('input', { 'aria-label': '新引用文档的文件夹', placeholder: '文件夹，例如：学习/数学（可留空）', value: this.state.referenceFolder || '', onChange: event => this.setState({ referenceFolder: event.target.value }) }),
+            button(`新建“${this.state.query || '输入标题'}”文档草稿并引用`, this.createReference),
+            h('p', null, this.state.referenceError || '引用目标发布后，网站上的链接才可访问。')),
+          this.state.menu === 'slash' && !results.length && h('p', null, '没有匹配的插入项。')),
+        );
     }
   }
   // The right-hand Decap preview uses the same renderer as our writing panel.
-  const Preview = props => h('div', { className: 'writing-preview', dangerouslySetInnerHTML: {
+  const Preview = props => h('div', { className: 'writing-native-preview', dangerouslySetInnerHTML: {
     __html: renderMarkdown(props.value, [], path => props.getAsset?.(path)) } });
   CMS.registerWidget('markdown', WritingControl, Preview, base.schema);
   CMS.registerPreviewStyle('/admin/writing-editor.css');

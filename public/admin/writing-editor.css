@@ -1,48 +1,32 @@
-.writing-editor { --writing-border: #d9dde4; color: #303744; font: 14px/1.65 system-ui, sans-serif; border: 1px solid var(--writing-border); border-radius: 10px; background: #fff; overflow: clip; }
-.writing-editor *, .writing-preview * { box-sizing: border-box; }
-.writing-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; padding: 10px; border-bottom: 1px solid var(--writing-border); background: #f8f9fb; }
-.writing-editor button, .writing-editor select { border: 1px solid #d9dde4; border-radius: 6px; background: #fff; color: #374151; padding: 5px 9px; font: inherit; cursor: pointer; }
-.writing-editor button:hover, .writing-editor button.is-active { background: #eef2f6; border-color: #94a3b8; }
+.writing-editor { position: relative; color: #303744; font: 14px/1.65 system-ui, sans-serif; }
+.writing-tools { display: flex; align-items: center; gap: 6px; min-height: 38px; padding: 4px 0; }
+.writing-editor .writing-action { border: 0; border-radius: 3px; background: transparent; color: #596273; padding: 5px 8px; font: inherit; font-size: 12px; cursor: pointer; }
+.writing-editor .writing-action:hover, .writing-editor .writing-action.is-active { background: #eef1f5; color: #202938; }
 .writing-editor :focus-visible { outline: 2px solid #64748b; outline-offset: 2px; }
-.writing-toolbar select { margin-left: auto; }
-.writing-workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 480px; max-height: 76vh; }
-.writing-workspace.layout-write, .writing-workspace.layout-preview { grid-template-columns: minmax(0, 1fr); }
-.writing-source { width: 100%; min-width: 0; min-height: 480px; height: 100%; padding: 20px; border: 0; border-right: 1px solid var(--writing-border); resize: vertical; background: #fff; color: #303744; font: 14px/24px ui-monospace, SFMono-Regular, Consolas, monospace; tab-size: 2; overflow: auto; }
-.writing-preview { padding: 20px; overflow: auto; overflow-wrap: anywhere; min-width: 0; background: #fff; color: #303744; font: 15px/1.85 system-ui, sans-serif; }
-.writing-preview > :first-child { margin-top: 0; }
-.writing-preview h1, .writing-preview h2, .writing-preview h3 { font-weight: 600; margin: 1.6em 0 .6em; line-height: 1.4; }
-.writing-preview h1 { font-size: 1.9em; } .writing-preview h2 { font-size: 1.5em; } .writing-preview h3 { font-size: 1.2em; }
-.writing-preview p { margin: 1em 0; }
-.writing-preview img { max-width: 100%; height: auto; border-radius: 5px; }
-.writing-preview hr { display: block; height: 0; border: 0; border-top: 1px solid #cbd0d8; margin: 2em 0; width: 100%; }
-.writing-preview table { width: 100%; border-collapse: collapse; margin: 1.3em 0; font-size: .9em; }
-.writing-preview td, .writing-preview th { border: 1px solid #d9dde4; padding: 8px 12px; text-align: left; }
-.writing-preview th { background: #f5f6f8; }
-.writing-preview a { color: #3561a3; text-decoration: underline; }
-.writing-preview pre { padding: 14px; background: #f5f6f8; border-radius: 6px; overflow-x: auto; }
-.writing-preview code { font-family: ui-monospace, Consolas, monospace; font-size: .9em; }
-.writing-preview blockquote { margin-left: 0; border-left: 3px solid #c4cad4; padding-left: 16px; color: #667085; }
-.writing-preview .katex-display { overflow-x: auto; overflow-y: hidden; padding: 8px 0; }
-.writing-preview .katex { font-size: 1.12em; }
-.writing-preview .katex-error { color: #b42318; }
-.writing-outline { grid-column: 1 / -1; max-height: 150px; overflow: auto; padding: 12px; border-top: 1px solid var(--writing-border); }
-.writing-outline strong { display: block; margin-bottom: 6px; }
-.writing-outline button { border: 0; text-align: left; font-size: 12px; margin: 2px 4px; }
-.writing-status, .writing-hint { display: block; padding: 9px 12px; background: #f8f9fb; color: #697386; font-size: 12px; border-top: 1px solid var(--writing-border); }
-.writing-status button { margin-left: 8px; }
-.writing-hint { border: 0; padding-top: 0; }
-.writing-notice, .writing-drafts { padding: 12px; background: #f4f6f9; border-bottom: 1px solid var(--writing-border); }
-.writing-notice button { margin-left: 8px; }
-.writing-drafts { max-height: 280px; overflow: auto; }
-.writing-drafts p, .writing-menu p { color: #667085; font-size: 12px; }
-.writing-drafts > div { display: flex; justify-content: space-between; gap: 8px; margin: 6px 0; }
-.writing-menu { border-bottom: 1px solid var(--writing-border); background: #f8f9fb; padding: 10px; max-height: 310px; overflow: auto; }
+.writing-native-layout { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 12px; align-items: start; }
+.writing-native-control { min-width: 0; }
+.writing-native-control > div { min-width: 0; }
+.writing-outline { position: sticky; top: 8px; max-height: min(66vh, 640px); overflow-y: auto; padding: 4px 0 4px 10px; border-left: 1px solid #e1e5eb; color: #717b8d; scrollbar-width: none; }
+.writing-outline::-webkit-scrollbar, .writing-drafts::-webkit-scrollbar, .writing-menu::-webkit-scrollbar { display: none; }
+.writing-outline strong { display: block; margin-bottom: 7px; color: #596273; font-size: 12px; font-weight: 600; }
+.writing-editor .writing-outline .writing-action { display: block; width: 100%; margin: 1px 0; text-align: left; line-height: 1.5; overflow-wrap: anywhere; }
+.writing-status { margin-top: 6px; color: #687387; font-size: 12px; }
+.writing-notice, .writing-drafts { margin: 5px 0; padding: 8px 0; color: #596273; font-size: 12px; }
+.writing-notice .writing-action { margin-left: 8px; }
+.writing-drafts { max-height: 240px; overflow: auto; border-block: 1px solid #e1e5eb; }
+.writing-drafts p, .writing-menu p { color: #707b8d; font-size: 12px; }
+.writing-drafts > div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin: 4px 0; }
+.writing-menu { position: relative; z-index: 10; max-height: 270px; overflow: auto; padding: 8px 0; border-block: 1px solid #e1e5eb; background: #fff; }
 .writing-menu-search { display: flex; gap: 8px; }
-.writing-menu input { min-width: 0; width: 100%; border: 1px solid #d9dde4; border-radius: 6px; padding: 8px; font: inherit; background: #fff; color: #303744; }
-.writing-menu > button { display: block; width: 100%; text-align: left; margin-top: 5px; overflow-wrap: anywhere; }
-.writing-reference-create { border-top: 1px solid var(--writing-border); padding-top: 10px; margin-top: 10px; }
-.writing-reference-create button { margin-top: 8px; }
-@media (max-width: 900px) { .writing-workspace { min-height: 360px; max-height: none; } .writing-workspace.layout-split { grid-template-columns: minmax(0, 1fr); } .writing-source { min-height: 360px; height: 45vh; border-right: 0; border-bottom: 1px solid var(--writing-border); font-size: 16px; } .writing-workspace > .writing-preview { max-height: 55vh; } }
+.writing-menu input { min-width: 0; width: 100%; border: 1px solid #d9dde4; border-radius: 4px; padding: 7px 9px; font: inherit; background: #fff; color: #303744; }
+.writing-menu > .writing-action { display: block; width: 100%; text-align: left; overflow-wrap: anywhere; }
+.writing-reference-create { margin-top: 8px; padding-top: 8px; border-top: 1px solid #e1e5eb; }
+.writing-reference-create .writing-action { margin-top: 6px; }
+.writing-native-preview { padding: 20px; overflow-wrap: anywhere; color: #303744; font: 15px/1.85 system-ui, sans-serif; }
+.writing-native-preview img { max-width: 100%; height: auto; }
+.writing-native-preview table { max-width: 100%; border-collapse: collapse; }
+.writing-native-preview th, .writing-native-preview td { border: 1px solid #d9dde4; padding: 7px 10px; }
+.writing-native-preview .katex-display { max-width: 100%; overflow-x: auto; }
 /* Decap 3.17 otherwise forces its whole editing shell to at least 800px. */
 @media (max-width: 799px) {
   [class*="EditorContainer"], [class*="ToolbarContainer"] { min-width: 0 !important; }
@@ -57,4 +41,6 @@
   [class*="ToolbarSubSection"] { min-width: 0; }
   [class*="ToolbarButton"], [class*="ToolbarDropdown"] { margin: 0 3px !important; padding: 5px 8px !important; font-size: 12px !important; }
   .writing-drafts > div { flex-wrap: wrap; }
+  .writing-native-layout { grid-template-columns: minmax(0, 1fr) minmax(92px, 120px); gap: 8px; }
+  .writing-outline { max-height: 56vh; }
 }
