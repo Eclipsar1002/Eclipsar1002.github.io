@@ -1,6 +1,6 @@
 # Eclipsar 的个人网站
 
-记录学习、项目、博客笔记、照片与日常碎片的个人空间。基于 **Atlas** 模板继续开发，使用 Astro 构建静态页面，通过 GitHub Pages 托管；写作后台使用 Decap CMS，GitHub OAuth 登录由 Cloudflare Worker 处理。
+记录学习、项目、博客笔记、照片与日常碎片的个人空间。基于 **Atlas** 模板继续开发，使用 Astro 构建静态页面，通过 GitHub Pages 托管；写作后台使用 Sveltia CMS 原生界面，GitHub OAuth 登录由 Cloudflare Worker 处理。
 
 - 网站：<https://eclipsar1002.github.io/>
 - 写作后台：<https://eclipsar1002.github.io/admin/>
@@ -19,7 +19,8 @@
 | [JIEJOE-WEB-Tutorial/017-audio-wave](https://github.com/JIEJOE-WEB-Tutorial/017-audio-wave) | 音乐封面周围的径向白色音频线条实现参考。将原教程的 PCM 分组振幅方法改为读取当前播放音频的实时 PCM，并调整线条数量、宽度、振幅和平滑参数。MIT 声明保存在 [public/licenses/jiejoe-audio-wave.txt](public/licenses/jiejoe-audio-wave.txt)。 |
 | [WenqiOfficial/StudyWithMiku](https://github.com/WenqiOfficial/StudyWithMiku) | 音乐歌单接入方式的参考：使用 Meting 兼容接口读取网易云歌单。本站播放器、共享 Audio 生命周期和控制界面由本仓库维护，不直接使用其整站播放器。 |
 | [metowolf/Meting](https://github.com/metowolf/Meting) | 音乐 API 生态与协议来源。本站通过第三方 Meting 兼容服务获取歌单和音频链接，未在 GitHub Pages 中部署 PHP Meting 服务。 |
-| [decaporg/decap-cms](https://github.com/decaporg/decap-cms) | 浏览器写作和媒体上传后台，当前加载 Decap CMS 3.17.3。内容通过 GitHub backend 提交。 |
+| [sveltia/sveltia-cms](https://github.com/sveltia/sveltia-cms) | 当前浏览器写作和媒体上传后台，固定使用 0.265.1。沿用 GitHub backend、原有内容目录和 OAuth Worker，使用原生编辑、媒体选择与草稿备份。 |
+| [decaporg/decap-cms](https://github.com/decaporg/decap-cms) | 迁移前的后台来源。现有内容格式和配置沿用其兼容格式；旧增强脚本已停止加载。 |
 | [withastro/astro](https://github.com/withastro/astro) | Astro 6 静态构建、路由、内容集合和页面导航。 |
 | [tailwindlabs/tailwindcss](https://github.com/tailwindlabs/tailwindcss) | Tailwind CSS 4 样式。 |
 | [KaTeX/KaTeX](https://github.com/KaTeX/KaTeX) | 博客数学公式渲染。 |
@@ -131,7 +132,7 @@ src/content/moments/           动态 Markdown
 src/components/                播放器、雨滴、外观、统计和附件等组件
 src/lib/audio-spectrum.ts      实时 PCM 径向音频线条
 src/lib/meting.ts              歌单提供方与音质配置
-public/admin/                  Decap CMS 页面、编辑字段、认证服务地址
+public/admin/                  Sveltia CMS 页面、编辑字段、认证服务地址
 public/uploads/                图片与 PDF
 public/licenses/               第三方署名声明
 services/cms-auth/              Cloudflare Worker 认证源码及测试

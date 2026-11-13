@@ -1,7 +1,3 @@
-import { registerPasteImages } from './paste-images.js';
-import { registerWritingEditor } from './writing-editor.js';
-import { registerSingleFileMoves } from './github-file-moves.js';
-
 const status = document.getElementById('admin-status');
 const message = document.getElementById('admin-message');
 
@@ -25,15 +21,12 @@ async function boot() {
   if (authUrl.protocol !== 'https:') throw new Error('登录认证服务必须使用 HTTPS');
   await new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = 'https://unpkg.com/decap-cms@3.17.3/dist/decap-cms.js';
+    script.src = 'https://unpkg.com/@sveltia/cms@0.265.1/dist/sveltia-cms.js';
     script.onload = resolve;
     script.onerror = () => reject(new Error('编辑器加载失败，请检查网络后刷新'));
     document.head.append(script);
   });
-  registerSingleFileMoves(window.CMS);
-  registerPasteImages(window.CMS);
-  registerWritingEditor(window.CMS);
-  window.CMS.init({ config: { backend: { base_url: authUrl.origin } } });
+  await window.CMS.init({ config: { backend: { base_url: authUrl.origin } } });
   status.hidden = true;
 }
 

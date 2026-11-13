@@ -6,9 +6,13 @@ backend:
 
 site_url: https://eclipsar1002.github.io
 display_url: https://eclipsar1002.github.io
-locale: zh_Hans
 media_folder: public/uploads
 public_folder: /uploads
+output:
+  omit_empty_optional_fields: true
+field_defaults:
+  richtext:
+    editor_components: [image, code-block, table, hr]
 slug:
   encoding: unicode
   clean_accents: true
@@ -29,9 +33,6 @@ collections:
       path:
         widget: string
         label: 文件夹
-        required: false
-        default: '/'
-        hint: '只移动当前文章，不移动同目录其他文章或附件。根目录填 /；例如 学习/数学。移动会改变网址，请同步修改引用。'
     summary: '{{title}} · {{pubDate}}'
     sortable_fields: [pubDate, title]
     view_groups:
@@ -43,7 +44,7 @@ collections:
       - { label: 发布时间, name: pubDate, widget: datetime, date_format: YYYY-MM-DD, time_format: 'HH:mm', format: 'YYYY-MM-DDTHH:mm:ssZ' }
       - { label: 最后修改时间, name: updatedDate, widget: datetime, required: false, format: 'YYYY-MM-DDTHH:mm:ssZ' }
       - { label: 标签, name: tags, widget: list, default: [], required: false }
-      - { label: 封面, name: cover, widget: image, required: false, allow_multiple: false }
+      - { label: 封面, name: cover, widget: image, required: false, multiple: false }
       - &pdfAttachments
         name: attachments
         label: PDF 附件
@@ -53,8 +54,8 @@ collections:
         summary: '{{fields.name}}'
         fields:
           - { label: 显示名称, name: name, widget: string, default: PDF 附件 }
-          - { label: PDF 文件, name: file, widget: file, allow_multiple: false, media_library: { config: { accept: application/pdf } }, hint: '上传 PDF 后，详情页会显示打开和下载入口。文件将进入公开仓库。' }
-      - { label: 正文, name: body, widget: markdown, required: false, hint: '输入 / 快捷插入，输入 [[ 搜索引用。草稿保存在当前浏览器，点击发布才公开。' }
+          - { label: PDF 文件, name: file, widget: file, multiple: false, accept: application/pdf, hint: '上传 PDF 后，详情页会显示打开和下载入口。文件将进入公开仓库。' }
+      - { label: 正文, name: body, widget: markdown, required: false, hint: '使用原生工具栏插入图片、表格和分割线。保存会提交到 GitHub，浏览器草稿备份不会自动发布。' }
 
   - name: projects
     label: 项目
@@ -101,7 +102,7 @@ collections:
         default: []
         summary: '{{fields.alt}}'
         fields:
-          - { label: 图片, name: src, widget: image, allow_multiple: false }
+          - { label: 图片, name: src, widget: image, multiple: false }
           - { label: 图片说明, name: alt, widget: string, required: false }
       - { label: 标签, name: tags, widget: list, required: false, default: [] }
 
@@ -113,8 +114,8 @@ collections:
         file: src/config/appearance.json
         format: json
         fields:
-          - { label: 背景图片, name: backgroundImage, widget: image, allow_multiple: false }
-          - { label: 手机背景图片, name: mobileBackgroundImage, widget: image, allow_multiple: false, hint: '屏幕宽度小于 768px 时使用，电脑背景不受影响。' }
+          - { label: 背景图片, name: backgroundImage, widget: image, multiple: false }
+          - { label: 手机背景图片, name: mobileBackgroundImage, widget: image, multiple: false, hint: '屏幕宽度小于 768px 时使用，电脑背景不受影响。' }
           - { label: 背景亮度, name: brightness, widget: number, value_type: float, min: 0.1, max: 1, step: 0.05, hint: '0.1 最暗，1 最亮。发布后成为所有访客的默认值。' }
           - { label: 背景模糊（像素）, name: backgroundBlur, widget: number, value_type: int, min: 0, max: 30, step: 1 }
           - { label: 默认网易云歌单 ID, name: playlistId, widget: string, pattern: ['^\d+$', '请输入纯数字歌单 ID'] }
