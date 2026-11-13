@@ -1,4 +1,5 @@
 import { registerPasteImages } from './paste-images.js';
+import { registerWritingEditor } from './writing-editor.js';
 
 const status = document.getElementById('admin-status');
 const message = document.getElementById('admin-message');
@@ -29,6 +30,7 @@ async function boot() {
     document.head.append(script);
   });
   registerPasteImages(window.CMS);
+  registerWritingEditor(window.CMS);
   window.CMS.init({ config: { backend: { base_url: authUrl.origin } } });
   status.hidden = true;
 }

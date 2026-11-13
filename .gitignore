@@ -1,5 +1,6 @@
 # build output
 /dist/
+/public/admin/generated/
 /.atlas-data/
 
 # generated types

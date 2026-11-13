@@ -85,6 +85,13 @@ html[data-entry-title-slide][data-astro-transition='back']::view-transition-new(
 	color: #d4d4d8;
 }
 
+.prose-content hr {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid rgb(255 255 255 / 18%);
+  margin: 2.25rem 0;
+}
+
 .prose-content h1,
 .prose-content h2,
 .prose-content h3,

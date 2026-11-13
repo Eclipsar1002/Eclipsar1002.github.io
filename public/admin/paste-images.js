@@ -1,3 +1,6 @@
+// Decap remounts a widget after applying restored fields. Keep staged previews
+// alive across those remounts; a full navigation releases the browser's blobs.
+const imagePreviewCache = new Map();
 // Keep Decap's editor, authentication, asset staging and publication flow.
 export function registerPasteImages(CMS) {
   const markdown = CMS.getWidget('markdown');
@@ -5,6 +8,7 @@ export function registerPasteImages(CMS) {
   const extensions = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' };
 
   class PasteImageControl extends markdown.control {
+    constructor(props) { super(props); this.imagePreviews = imagePreviewCache; }
     componentDidMount() {
       super.componentDidMount?.();
       this.alive = true;
@@ -56,7 +60,7 @@ export function registerPasteImages(CMS) {
         return;
       }
       const selection = window.getSelection();
-      const range = selection?.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
+      const range = !(target instanceof HTMLTextAreaElement) && selection?.rangeCount ? selection.getRangeAt(0).cloneRange() : null;
       const caret = target instanceof HTMLTextAreaElement ? [target.selectionStart, target.selectionEnd] : null;
       const job = { files, target, range, caret, uploaded: [] };
       this.uploadImages(job);
@@ -83,6 +87,7 @@ export function registerPasteImages(CMS) {
           const url = `${folder.replace(/\/$/, '')}/${media.path.split('/').pop()}`;
           this.imagePreviews ||= new Map();
           if (media.displayURL || media.url) this.imagePreviews.set(url, media.displayURL || media.url);
+          await this.onPastedMedia?.({ file, url });
           job.uploaded.push(url);
         }
         if (!this.alive) return;

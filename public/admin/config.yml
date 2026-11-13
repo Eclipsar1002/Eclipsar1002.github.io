@@ -21,9 +21,16 @@ collections:
     create: true
     extension: md
     format: yaml-frontmatter
-    slug: '{{year}}-{{month}}-{{day}}-{{slug}}'
+    slug: '{{slug}}'
     nested:
       depth: 10
+    meta:
+      path:
+        widget: string
+        label: 文件夹
+        required: false
+        default: '/'
+        hint: '例如 学习/数学；根目录请填 /。已发布文章修改文件夹会改变网址，请同时更新引用。'
     summary: '{{title}} · {{pubDate}}'
     sortable_fields: [pubDate, title]
     view_groups:
@@ -46,7 +53,7 @@ collections:
         fields:
           - { label: 显示名称, name: name, widget: string, default: PDF 附件 }
           - { label: PDF 文件, name: file, widget: file, allow_multiple: false, media_library: { config: { accept: application/pdf } }, hint: '上传 PDF 后，详情页会显示打开和下载入口。文件将进入公开仓库。' }
-      - { label: 正文, name: body, widget: markdown, required: false, hint: '支持 Markdown。公式和双链在发布后由网站渲染。保存发布的内容会进入公开仓库。' }
+      - { label: 正文, name: body, widget: markdown, required: false, hint: '输入 / 快捷插入，输入 [[ 搜索引用。草稿保存在当前浏览器，点击发布才公开。' }
 
   - name: projects
     label: 项目

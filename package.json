@@ -6,6 +6,11 @@
     "node": ">=22.12.0"
   },
   "scripts": {
+    "predev": "node scripts/build-admin.mjs",
+    "predev:host": "node scripts/build-admin.mjs",
+    "predev:dynamic": "node scripts/build-admin.mjs",
+    "prebuild": "node scripts/build-admin.mjs",
+    "prebuild:dynamic": "node scripts/build-admin.mjs",
     "dev": "astro dev",
     "dev:host": "node ./scripts/dev-server.mjs",
     "dev:dynamic": "node ./scripts/dev-server.mjs --dynamic",
@@ -22,6 +27,12 @@
     "astro": "astro"
   },
   "dependencies": {
+    "esbuild": "^0.27.7",
+    "unified": "^11.0.5",
+    "remark-parse": "^11.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-rehype": "^11.1.2",
+    "rehype-stringify": "^10.0.1",
     "@tailwindcss/vite": "^4.3.0",
     "astro": "^6.3.6",
     "curtainsjs": "^8.1.6",

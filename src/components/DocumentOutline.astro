@@ -1,0 +1,72 @@
+<aside class="document-outline" data-document-outline hidden>
+  <details open>
+    <summary>文档目录</summary>
+    <nav aria-label="文章目录" data-outline-links></nav>
+  </details>
+</aside>
+
+<script>
+  function mountOutline() {
+    const root = document.querySelector<HTMLElement>('[data-document-outline]');
+    const content = document.querySelector<HTMLElement>('article > .prose-content');
+    if (!root || !content || root.dataset.bound) return;
+    root.dataset.bound = 'true';
+    const headings = [...content.querySelectorAll<HTMLElement>('h2, h3, h4')];
+    if (headings.length < 2) return;
+    const nav = root.querySelector<HTMLElement>('[data-outline-links]')!;
+    const ids = new Set([...document.querySelectorAll('[id]')].map(element => element.id));
+    const links = headings.map((heading, index) => {
+      if (!heading.id) {
+        let id = `section-${index + 1}`;
+        while (ids.has(id)) id += '-';
+        heading.id = id; ids.add(id);
+      }
+      const link = document.createElement('a');
+      link.href = `#${encodeURIComponent(heading.id)}`;
+      link.textContent = heading.textContent;
+      link.dataset.depth = heading.tagName.slice(1);
+      nav.append(link);
+      return link;
+    });
+    root.hidden = false;
+    if (matchMedia('(max-width: 1279px)').matches) root.querySelector('details')!.open = false;
+    const update = () => {
+      let active = 0;
+      headings.forEach((heading, index) => { if (heading.getBoundingClientRect().top <= 150) active = index; });
+      links.forEach((link, index) => {
+        if (index === active) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      });
+    };
+    // One throttled listener per detail page, removed before Astro swaps pages.
+    let scheduled = false;
+    let frame = 0;
+    const onScroll = () => {
+      if (scheduled) return;
+      scheduled = true;
+      frame = requestAnimationFrame(() => { scheduled = false; update(); });
+    };
+    addEventListener('scroll', onScroll, { passive: true });
+    update();
+    document.addEventListener('astro:before-swap', () => {
+      removeEventListener('scroll', onScroll); cancelAnimationFrame(frame);
+    }, { once: true });
+  }
+  mountOutline();
+  document.addEventListener('astro:page-load', mountOutline);
+</script>
+
+<style>
+  .document-outline { margin-top: 2rem; padding: 1rem; border: 1px solid #ffffff18; border-radius: .7rem; background: #151517aa; color: #a1a1aa; font-size: .8rem; }
+  .document-outline[hidden] { display: none; }
+  summary { cursor: pointer; color: #d4d4d8; font-size: .85rem; }
+  nav { display: grid; gap: .2rem; margin-top: .8rem; max-height: 55svh; overflow-y: auto; }
+  nav :global(a) { display: block; border-left: 1px solid #ffffff18; padding: .4rem .65rem; line-height: 1.65; transition: color .15s, border-color .15s; overflow-wrap: anywhere; }
+  nav :global(a[data-depth="3"]) { padding-left: 1.25rem; }
+  nav :global(a[data-depth="4"]) { padding-left: 1.85rem; }
+  nav :global(a:hover), nav :global(a[aria-current]) { color: #fafafa; border-color: #ffffffb0; }
+  @media (min-width: 1280px) {
+    .document-outline { position: fixed; top: 8rem; left: calc(50% + 25rem); width: min(13rem, calc(50vw - 26rem)); margin: 0; }
+  }
+  :global(.prose-content h2), :global(.prose-content h3), :global(.prose-content h4) { scroll-margin-top: 7rem; }
+</style>

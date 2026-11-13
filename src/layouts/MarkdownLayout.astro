@@ -1,6 +1,7 @@
 ---
 import Layout from './Layout.astro';
 import PdfAttachments from '../components/PdfAttachments.astro';
+import DocumentOutline from '../components/DocumentOutline.astro';
 import { getLocaleFromUrl, getSiteConfig, localizePath } from '../config/site';
 import { getBlogImageAssets } from '../utils/blog-assets';
 import type { ReadingStats } from '../utils/reading-stats';
@@ -62,6 +63,7 @@ const formattedDate = date?.toLocaleDateString('zh-CN', {
 			)}
 		</header>
 		<PdfAttachments files={attachments} />
+		<DocumentOutline />
 		<div class="prose-content mt-10">
 			<slot />
 		</div>

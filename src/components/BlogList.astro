@@ -25,6 +25,7 @@ interface Props {
 
 const { posts, labels } = Astro.props;
 const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort((a, b) => a.localeCompare(b));
+const folders = [...new Set(posts.map(post => post.id.split('/').slice(0, -1).join('/')).filter(Boolean))].sort();
 ---
 
 <div data-blog-filter>
@@ -37,6 +38,11 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort((a, b) =
 			placeholder={labels.search}
 			class="w-full rounded-lg border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-white/30"
 		/>
+		{folders.length > 0 && <select data-blog-folder aria-label="按文件夹筛选文章" class="mt-4 max-w-full rounded-lg border border-white/10 bg-black/70 px-3 py-2 text-sm text-zinc-300">
+			<option value="">全部文件夹</option>
+			<option value="__root">未分类（根目录）</option>
+			{folders.map(folder => <option value={folder}>{folder}</option>)}
+		</select>}
 		<div class="mt-4 flex flex-wrap gap-2">
 			<button
 				type="button"
@@ -61,6 +67,7 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort((a, b) =
 		{posts.map((post) => (
 			<div
 				data-blog-card
+				data-folder={post.id.split('/').slice(0, -1).join('/')}
 				data-search={`${getEntryTitle(post)} ${getEntryDescription(post)} ${post.data.tags.join(' ')}`.toLowerCase()}
 				data-tags={post.data.tags.join('\u001f').toLowerCase()}
 			>
@@ -69,17 +76,21 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort((a, b) =
 		))}
 	</div>
 
-	<p data-blog-empty class="hidden rounded-lg border border-white/10 bg-white/[0.03] p-6 text-sm text-zinc-400">
+	<p data-blog-empty hidden class="rounded-lg border border-white/10 bg-white/[0.03] p-6 text-sm text-zinc-400">
 		{labels.empty}
 	</p>
 </div>
 
 <script>
+	function mountBlogFilters() {
 	document.querySelectorAll('[data-blog-filter]').forEach((root) => {
+		if (root.hasAttribute('data-filter-bound')) return;
+		root.setAttribute('data-filter-bound', '');
 		const search = root.querySelector<HTMLInputElement>('[data-blog-search]');
 		const cards = [...root.querySelectorAll<HTMLElement>('[data-blog-card]')];
 		const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-blog-tag]')];
 		const empty = root.querySelector<HTMLElement>('[data-blog-empty]');
+		const folder = root.querySelector<HTMLSelectElement>('[data-blog-folder]');
 		let activeTag = 'all';
 
 		const setButtonState = () => {
@@ -103,7 +114,10 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort((a, b) =
 				const tagList = (card.dataset.tags ?? '').split('\u001f').filter(Boolean);
 				const matchesQuery = !query || searchableText.includes(query);
 				const matchesTag = activeTag === 'all' || tagList.includes(activeTag.toLowerCase());
-				const isVisible = matchesQuery && matchesTag;
+				const selectedFolder = folder?.value || '';
+				const cardFolder = card.dataset.folder || '';
+				const matchesFolder = !selectedFolder || (selectedFolder === '__root' ? !cardFolder : cardFolder === selectedFolder || cardFolder.startsWith(`${selectedFolder}/`));
+				const isVisible = matchesQuery && matchesTag && matchesFolder;
 
 				card.hidden = !isVisible;
 				if (isVisible) visibleCount += 1;
@@ -114,6 +128,7 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort((a, b) =
 		};
 
 		search?.addEventListener('input', filterCards);
+		folder?.addEventListener('change', filterCards);
 		buttons.forEach((button) => {
 			button.addEventListener('click', () => {
 				activeTag = button.dataset.blogTag ?? 'all';
@@ -123,4 +138,7 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort((a, b) =
 
 		filterCards();
 	});
+	}
+	mountBlogFilters();
+	document.addEventListener('astro:page-load', mountBlogFilters);
 </script>
