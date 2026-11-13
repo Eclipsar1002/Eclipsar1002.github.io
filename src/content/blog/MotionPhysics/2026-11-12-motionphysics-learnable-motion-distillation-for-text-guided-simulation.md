@@ -7,7 +7,7 @@ updatedDate: 2026-11-13T16:59:00+08:00
 tags:
   - 3D
   - Physics
-cover: https://ts3.tc.mm.bing.net/th/id/OIP-C.DoFATyQeyYJ58rSuTyTvhAHaNK?r=0&rs=1&pid=ImgDetMain&o=7&rm=3
+cover: ""
 attachments: []
 ---
 ![截图](/uploads/screenshot-1794475129586-9e1fff7f-a408-4fc2-b427-9b03b10402a7.png)
@@ -97,7 +97,5 @@ $$\frac{\partial L}{\partial\theta}=\frac{\partial L}{\partial I}\frac{\partial 
 * 用单独的参数更新函数修改 E、nu 等物理系数。
 
 物理参数更新还包括梯度归一化、对数空间更新和范围限制，对应 \[update_grad.py (line 26)]。
-
-
 
 ![截图](/uploads/screenshot-1794491732490-60700203-0c64-4cff-84dc-721cbc333902.png)
