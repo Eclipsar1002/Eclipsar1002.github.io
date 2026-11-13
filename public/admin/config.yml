@@ -24,13 +24,14 @@ collections:
     slug: '{{slug}}'
     nested:
       depth: 10
+      subfolders: false
     meta:
       path:
         widget: string
         label: 文件夹
         required: false
         default: '/'
-        hint: '例如 学习/数学；根目录请填 /。已发布文章修改文件夹会改变网址，请同时更新引用。'
+        hint: '只移动当前文章，不移动同目录其他文章或附件。根目录填 /；例如 学习/数学。移动会改变网址，请同步修改引用。'
     summary: '{{title}} · {{pubDate}}'
     sortable_fields: [pubDate, title]
     view_groups:
