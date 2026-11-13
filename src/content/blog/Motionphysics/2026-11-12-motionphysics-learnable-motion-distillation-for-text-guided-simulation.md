@@ -113,4 +113,24 @@ $$\frac{\partial L}{\partial\theta}=\frac{\partial L}{\partial I}\frac{\partial 
 
 ### 实现细节
 
-各向异性正则化减轻细长伪影，帧增强方案，仅在最终步骤计算梯度。
+各向异性正则化减轻细长伪影，帧增强方案，仅在最终步骤计算梯度。此外，可学习的运动蒸馏使用 CogVideoX 模型进行蒸馏，采用无分类器引导（CFG=100）（数字越高，生成的动作越贴合文字提示），遵循 PhysFlow。训练在大约 40 次迭代后收敛，在 NVIDIA A100 80 GB GPU 上，每次前向-反向传播大约需要 28 秒。
+
+## 结果与讨论
+
+### 数据集
+
+- 人工设计：8个PAC-NeRF模型，这些模型显示均匀的颜色而非纹理，使用来自GIC（Cai 等, 2024）的静态3DGS重建
+- 真实世界：包含四个PhysDreamer场景（Alocasia、Carnation、Hat和Telephone）（Zhang 等, 2024）以及另外四个场景：来自InstantNGP（Müller 等, 2022）的Fox，来自NeRFStudio（Tancik 等, 2023）的Plane，来自Mip-NeRF 360（Barron 等, 2022）的Kitchen，以及来自PhysFlow的Jam和Sandcastle，对所有真实世界场景使用PhysFlow提供的文本提示
+- AI生成：使用来自Hunyuan3D（Zhao 等, 2025）的网格Urchin、Alien、Gentleman和Axe，并通过GaMes（Waczyńska 等, 2024）进一步处理以获得其对应的3DGS表示
+
+### Baseline
+
+- PhysDreamer:模拟渲染与生成视频之间的图像外观损失来估计材料属性和初始速度，仅支持弹性材料
+- PhysFlow：最小化光流损失
+- OmniPhysGS：通过视频扩散引导使用本构 3D 高斯建模异质对象。
+
+### 评估
+
+Physical Realism，Prompt Adherence，整体一致性（OC），ViCLIP,CLIPSIM,ECMS
+
+###
