@@ -1,15 +1,14 @@
 ---
-title: "MotionPhysics: Learnable Motion Distillation for Text-Guided Simulation"
-description: |
-  自然语言提示中推断出合理的物理参数，用于指定的3D场景，无需依赖真实轨迹或标注视频的指导。
+title: 'MotionPhysics: Learnable Motion Distillation for Text-Guided Simulation'
+description: 自然语言提示中推断出合理的物理参数，用于指定的3D场景，无需依赖真实轨迹或标注视频的指导。
 pubDate: 2026-11-11T21:26:00+08:00
 updatedDate: 2026-11-13T16:59:00+08:00
 tags:
   - 3D
   - Physics
-cover: ""
-attachments: []
+cover: /uploads/pasted-image-1794576928295.png
 ---
+
 ![截图](/uploads/screenshot-1794475129586-9e1fff7f-a408-4fc2-b427-9b03b10402a7.png)
 
 ## 期望解决的问题
@@ -32,19 +31,17 @@ attachments: []
 
 可微物理仿真+三维高斯渲染：参数变成运动视频，并把视频误差传回参数
 
-**困难在于：视频模型学到的运动，外观和几何形状混在一起，**优化可能被颜色，纹理或形状差异带偏，无法稳定找到合理材料参数。
+\*\*困难在于：视频模型学到的运动，外观和几何形状混在一起，\*\*优化可能被颜色，纹理或形状差异带偏，无法稳定找到合理材料参数。
 
 ### 创新点一：用有范围约束的多模态大模型初始化材料
 
-$$\theta_{\mathrm{ini}}={\text{材料类别 }c,\ \text{密度 }\rho,\ \text{材料系数 }\theta_c}$$
+$$\theta\_{\mathrm{ini}}={\text{材料类别 }c,\ \text{密度 }\rho,\ \text{材料系数 }\theta_c}$$
 
 材料类别：弹性体；金属、橡皮泥；沙子；泡沫，流体
 
 行为：变形后恢复；达到条件后永久变形；颗粒堆积、滑落；黏性、流动、压缩等
 
 **把材料手册中的合理数值范围写进提示词模板，限制大模型的初始输出**
-
->
 
 ### 创新点二：Learnable Motion Distillation，LMD
 
@@ -96,7 +93,7 @@ $$\frac{\partial L}{\partial\theta}=\frac{\partial L}{\partial I}\frac{\partial 
 * 用 AdamW 更新小型 `SpatialHead`。
 * 用单独的参数更新函数修改 E、nu 等物理系数。
 
-物理参数更新还包括梯度归一化、对数空间更新和范围限制，对应 \[update_grad.py (line 26)]。
+物理参数更新还包括梯度归一化、对数空间更新和范围限制，对应 [update_grad.py (line 26)]。
 
 ![截图](/uploads/screenshot-1794491732490-60700203-0c64-4cff-84dc-721cbc333902.png)
 
