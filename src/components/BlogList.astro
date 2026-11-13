@@ -38,11 +38,14 @@ const folders = [...new Set(posts.map(post => post.id.split('/').slice(0, -1).jo
 			placeholder={labels.search}
 			class="w-full rounded-lg border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-white/30"
 		/>
-		{folders.length > 0 && <select data-blog-folder aria-label="按文件夹筛选文章" class="mt-4 max-w-full rounded-lg border border-white/10 bg-black/70 px-3 py-2 text-sm text-zinc-300">
-			<option value="">全部文件夹</option>
-			<option value="__root">未分类（根目录）</option>
-			{folders.map(folder => <option value={folder}>{folder}</option>)}
-		</select>}
+		{folders.length > 0 && <details class="blog-folder mt-4" data-blog-folder>
+			<summary aria-label="按文件夹筛选文章"><span data-folder-label>全部文件夹</span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" /></svg></summary>
+			<div class="blog-folder-menu" aria-label="文章文件夹">
+				<button type="button" data-folder-value="" aria-pressed="true">全部文件夹</button>
+				<button type="button" data-folder-value="__root" aria-pressed="false">未分类（根目录）</button>
+				{folders.map(folder => <button type="button" data-folder-value={folder} aria-pressed="false">{folder}</button>)}
+			</div>
+		</details>}
 		<div class="mt-4 flex flex-wrap gap-2">
 			<button
 				type="button"
@@ -81,6 +84,20 @@ const folders = [...new Set(posts.map(post => post.id.split('/').slice(0, -1).jo
 	</p>
 </div>
 
+<style>
+	.blog-folder { position: relative; width: fit-content; max-width: 100%; color: #d4d4d8; font-size: .875rem; }
+	.blog-folder summary { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; padding: .6rem .85rem; border: 1px solid #ffffff26; border-radius: .65rem; background: #18181bd9; cursor: pointer; list-style: none; transition: background .15s, border-color .15s; }
+	.blog-folder summary::-webkit-details-marker { display: none; }
+	.blog-folder summary:hover, .blog-folder[open] summary { background: #202023ed; border-color: #ffffff40; }
+	.blog-folder summary svg { flex-shrink: 0; transition: transform .15s; }
+	.blog-folder[open] summary svg { transform: rotate(180deg); }
+	.blog-folder-menu { position: absolute; z-index: 30; top: calc(100% + .5rem); left: 0; min-width: 100%; width: max-content; max-width: min(22rem, calc(100vw - 5rem)); max-height: 18rem; overflow: auto; scrollbar-width: none; padding: .35rem; border: 1px solid #ffffff24; border-radius: .75rem; background: #151517f5; backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); box-shadow: 0 20px 60px #0008; }
+	.blog-folder-menu::-webkit-scrollbar { display: none; }
+	.blog-folder-menu button { display: block; width: 100%; padding: .6rem .8rem; border-radius: .4rem; text-align: left; overflow-wrap: anywhere; color: #d4d4d8; background: transparent; cursor: pointer; transition: background .15s, color .15s; }
+	.blog-folder-menu button:hover, .blog-folder-menu button[aria-pressed="true"] { background: #ffffff12; color: #fafafa; }
+	.blog-folder :focus-visible { outline: 1px solid #ffffff70; outline-offset: 2px; }
+</style>
+
 <script>
 	function mountBlogFilters() {
 	document.querySelectorAll('[data-blog-filter]').forEach((root) => {
@@ -90,7 +107,9 @@ const folders = [...new Set(posts.map(post => post.id.split('/').slice(0, -1).jo
 		const cards = [...root.querySelectorAll<HTMLElement>('[data-blog-card]')];
 		const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-blog-tag]')];
 		const empty = root.querySelector<HTMLElement>('[data-blog-empty]');
-		const folder = root.querySelector<HTMLSelectElement>('[data-blog-folder]');
+		const folder = root.querySelector<HTMLDetailsElement>('[data-blog-folder]');
+		const folderOptions = [...root.querySelectorAll<HTMLButtonElement>('[data-folder-value]')];
+		let selectedFolder = '';
 		let activeTag = 'all';
 
 		const setButtonState = () => {
@@ -114,7 +133,6 @@ const folders = [...new Set(posts.map(post => post.id.split('/').slice(0, -1).jo
 				const tagList = (card.dataset.tags ?? '').split('\u001f').filter(Boolean);
 				const matchesQuery = !query || searchableText.includes(query);
 				const matchesTag = activeTag === 'all' || tagList.includes(activeTag.toLowerCase());
-				const selectedFolder = folder?.value || '';
 				const cardFolder = card.dataset.folder || '';
 				const matchesFolder = !selectedFolder || (selectedFolder === '__root' ? !cardFolder : cardFolder === selectedFolder || cardFolder.startsWith(`${selectedFolder}/`));
 				const isVisible = matchesQuery && matchesTag && matchesFolder;
@@ -128,7 +146,28 @@ const folders = [...new Set(posts.map(post => post.id.split('/').slice(0, -1).jo
 		};
 
 		search?.addEventListener('input', filterCards);
-		folder?.addEventListener('change', filterCards);
+		folderOptions.forEach(option => option.addEventListener('click', () => {
+			selectedFolder = option.dataset.folderValue || '';
+			const label = folder?.querySelector('[data-folder-label]');
+			if (label) label.textContent = option.textContent;
+			folderOptions.forEach(item => item.setAttribute('aria-pressed', String(item === option)));
+			if (folder) { folder.open = false; folder.querySelector('summary')?.focus(); }
+			filterCards();
+		}));
+		if (folder) {
+			const onOutside = (event: PointerEvent) => { if (event.target instanceof Node && !folder.contains(event.target)) folder.open = false; };
+			document.addEventListener('pointerdown', onOutside);
+			document.addEventListener('astro:before-swap', () => document.removeEventListener('pointerdown', onOutside), { once: true });
+			folder.addEventListener('keydown', event => {
+				if (event.key === 'Escape') { folder.open = false; folder.querySelector('summary')?.focus(); }
+				if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+					event.preventDefault(); folder.open = true;
+					const current = folderOptions.indexOf(document.activeElement as HTMLButtonElement);
+					const next = current < 0 ? (event.key === 'ArrowDown' ? 0 : folderOptions.length - 1) : (current + (event.key === 'ArrowDown' ? 1 : -1) + folderOptions.length) % folderOptions.length;
+					folderOptions[next]?.focus();
+				}
+			});
+		}
 		buttons.forEach((button) => {
 			button.addEventListener('click', () => {
 				activeTag = button.dataset.blogTag ?? 'all';
