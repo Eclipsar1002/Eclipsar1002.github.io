@@ -30,7 +30,12 @@
     });
     root.hidden = false;
     if (matchMedia('(max-width: 1279px)').matches) root.querySelector('details')!.open = false;
+    const footer = document.querySelector<HTMLElement>('footer');
     const update = () => {
+      // Keep the fixed outline above the footer as it enters the viewport.
+      const footerTop = footer?.getBoundingClientRect().top ?? innerHeight;
+      const bottom = Math.max(24, innerHeight - footerTop + 16);
+      root.style.setProperty('--outline-bottom', `${bottom}px`);
       let active = 0;
       headings.forEach((heading, index) => { if (heading.getBoundingClientRect().top <= 150) active = index; });
       links.forEach((link, index) => {
@@ -47,9 +52,16 @@
       frame = requestAnimationFrame(() => { scheduled = false; update(); });
     };
     addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', onScroll);
+    const resizeObserver = new ResizeObserver(onScroll);
+    resizeObserver.observe(content);
+    if (footer) resizeObserver.observe(footer);
     update();
     document.addEventListener('astro:before-swap', () => {
-      removeEventListener('scroll', onScroll); cancelAnimationFrame(frame);
+      removeEventListener('scroll', onScroll);
+      removeEventListener('resize', onScroll);
+      resizeObserver.disconnect();
+      cancelAnimationFrame(frame);
     }, { once: true });
   }
   mountOutline();
@@ -57,12 +69,12 @@
 </script>
 
 <style>
-  .document-outline { position: fixed; left: max(1rem, calc(50% - 42rem)); top: 8rem; bottom: 1.5rem; width: 12rem; color: #a1a1aa; font-size: .8rem; }
+  .document-outline { position: fixed; left: max(1rem, calc(50% - 42rem)); top: 8rem; bottom: var(--outline-bottom, 1.5rem); width: 12rem; color: #a1a1aa; font-size: .8rem; }
   .document-outline[hidden] { display: none; }
   summary { cursor: pointer; color: #d4d4d8; font-size: .85rem; }
   .document-outline details[open] { display: flex; flex-direction: column; height: 100%; }
   summary { flex-shrink: 0; }
-  nav { display: grid; align-content: start; gap: .2rem; margin-top: .8rem; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+  nav { display: grid; align-content: start; gap: .2rem; margin-top: .8rem; min-height: 0; max-height: max(0px, calc(100dvh - 8rem - var(--outline-bottom, 1.5rem) - 2.25rem)); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
   nav::-webkit-scrollbar { display: none; }
   nav :global(a) { display: block; border-left: 1px solid #ffffff18; padding: .4rem .65rem; line-height: 1.65; transition: color .15s, border-color .15s; overflow-wrap: anywhere; }
   nav :global(a[data-depth="3"]) { padding-left: 1.25rem; }
