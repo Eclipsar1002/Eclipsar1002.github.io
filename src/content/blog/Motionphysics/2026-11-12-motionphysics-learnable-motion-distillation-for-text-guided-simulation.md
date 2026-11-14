@@ -6,7 +6,7 @@ updatedDate: 2026-11-13T16:59:00+08:00
 tags:
   - 3D
   - Physics
-cover: https://i0.hdslb.com/bfs/new_dyn/c3d065e7288b32151aa422753305644035136658.jpg
+cover: /uploads/c3d065e7288b32151aa422753305644035136658(1).jpg
 ---
 
 ![截图](/uploads/screenshot-1794475129586-9e1fff7f-a408-4fc2-b427-9b03b10402a7.png)
