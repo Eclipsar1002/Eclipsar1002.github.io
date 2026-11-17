@@ -9,6 +9,8 @@ tags:
 cover: /uploads/ef909c9066033d0e526de12ba840cc0e.jpg
 ---
 
+## 被引
+
 **AgentDreamer** Agentic 3D Motion Reasoning for Text-Controllable Physics Simulation
 
 通过智能体生成的3D运动规划实现文本可控物理模拟的框架。
@@ -33,12 +35,20 @@ cover: /uploads/ef909c9066033d0e526de12ba840cc0e.jpg
 
 ***
 
-PhysDreamer：生成视频提供运动线索，MPM把材料参数转化为运动，再对照视频优化。出发点是视频先验推断材料。侧重于弹性材料估计。
+## 引用
 
-DreamPhysics:同上，但是针对的是怎么从视频扩散模型里提取有用的物理运动先验。侧重于运动蒸馏。
+**PhysDreamer**：生成视频提供运动线索，MPM把材料参数转化为运动，再对照视频优化。出发点是视频先验推断材料。侧重于弹性材料估计。
 
-OmniPhysGS：不只调一个参数，而是让局部Gaussian能选择不同本构行为，支持异质材料和材料间交互。侧重于一般材料本构表示。
+**DreamPhysics**:同上，但是针对的是怎么从视频扩散模型里提取有用的物理运动先验。侧重于运动蒸馏。
 
-PhysSplat:快速的自动化物理属性推断系统。用MLLM及学习到的几何分布估计取代昂贵的扩散优化。
+**OmniPhysGS**：不只调一个参数，而是让局部Gaussian能选择不同本构行为，支持异质材料和材料间交互。侧重于一般材料本构表示。
 
-PhysGM:一次前向预测场景表示和物理属性，后续再运行MPM。通过大规模训练和DPO，将逐场景优化成本转移到模型训练阶段。
+**PhysSplat**:快速的自动化物理属性推断系统。用MLLM及学习到的几何分布估计取代昂贵的扩散优化。
+
+**PhysGM**:一次前向预测场景表示和物理属性，后续再运行MPM。通过大规模训练和DPO，将逐场景优化成本转移到模型训练阶段。
+
+***
+
+## 后来者的改进
+
+AgentDreamer相比于Motionphysics，不在尝试从生成的视频中推导出二维空间中的运动引导，因为不管Motionphysics蒸馏的多好
