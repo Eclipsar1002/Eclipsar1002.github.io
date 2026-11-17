@@ -61,4 +61,20 @@ AgentDreamer相比于Motionphysics，不在尝试从生成的视频中推导出�
 
 ## 3D运动调研
 
-因此，进一步调研方向应该放在3D物理轨迹方面。
+因此，进一步调研方向应该放在3D物理轨迹方面。也就是从2D的先验转化为3D先验。
+
+文本——>3D运动先验
+
+LAMP：
+
+3D人体运动生成？（Text-to-Motion）
+
+相关综述指出，基于扩散模型或VAE方法是该领域主流（？），从文本生成平滑的3D人体运动序列，以他们作为参考。
+
+Mimic2DM这篇工作就明确指出，传统的“先用网络从视频重建3D姿态，再让物理角色模仿”的两步法存在**3D重建脆弱、误差被放大**的问题，尤其对于非标准物体或复杂动作。
+
+AgentDreamer:见上
+
+MolmoMotion:根据语言指令预测3D点轨迹，直接研究语言到3D轨迹映射，借鉴轨迹表示，预测方法和评测设计。
+
+[Learning Physics-Guided Residual Dynamics for Deformable Object Simulation](https://www.alphaxiv.org/zh/abs/2607.13451)：考虑到AgentDreamer在滚动，旋转衰减，下落弹跳上优势明显，但在振荡和形变上提升幅度有限。这篇可以作为补充。思考3D轨迹怎么与形变，接触和模拟误差结合。
