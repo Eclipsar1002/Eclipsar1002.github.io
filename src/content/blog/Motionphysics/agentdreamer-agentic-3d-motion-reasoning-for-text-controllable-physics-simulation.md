@@ -51,4 +51,14 @@ cover: /uploads/ef909c9066033d0e526de12ba840cc0e.jpg
 
 ## 后来者的改进
 
-AgentDreamer相比于Motionphysics，不在尝试从生成的视频中推导出二维空间中的运动引导，因为不管Motionphysics蒸馏的多好
+AgentDreamer相比于Motionphysics，不在尝试从生成的视频中推导出二维空间中的运动引导，因为不管Motionphysics蒸馏的多好，还是在2D的地基上面搭建，存在深度歧义，无法直接给出三维空间的明确目标。
+
+因此AgentDreamer的做法选择绕开视频，让多模态智能体直接在3D几何上面写出参数化函数，生成显式的3D轨迹作为伪监督。
+
+特别是可变形物体弹跳指令下，MotionPhysics只做出了撞击形变但没有明显回弹，但AgentDreamer正确生成了形变之后的回弹动作。
+
+***
+
+## 3D运动调研
+
+因此，进一步调研方向应该放在3D物理轨迹方面。
