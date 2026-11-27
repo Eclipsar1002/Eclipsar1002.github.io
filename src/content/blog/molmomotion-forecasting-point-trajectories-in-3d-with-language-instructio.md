@@ -6,7 +6,6 @@ updatedDate: 2026-11-18T21:45:00+08:00
 tags:
   - 3D
   - physics
-cover: https://pbs.twimg.com/media/HI-xay9akAAW4OV?format=jpg&name=4096x4096
 ---
 
 - MolmoMotion-1M是一个大型语料库，描述动作，基于对象的3D点轨迹数据集，由1.16M个无约束视频标注
