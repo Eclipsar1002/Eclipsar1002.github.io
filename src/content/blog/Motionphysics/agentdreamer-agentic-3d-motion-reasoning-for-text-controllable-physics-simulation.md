@@ -6,7 +6,6 @@ updatedDate: 2026-11-17T20:32:00+08:00
 tags:
   - 3D
   - physics
-cover: /uploads/ef909c9066033d0e526de12ba840cc0e.jpg
 ---
 
 ## 被引
